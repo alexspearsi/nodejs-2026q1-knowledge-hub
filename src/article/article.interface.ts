@@ -1,5 +1,5 @@
 export interface Article {
-  id: string; // uuid v4
+  id: string;
   title: string;
   content: string;
   status: 'draft' | 'published' | 'archived';

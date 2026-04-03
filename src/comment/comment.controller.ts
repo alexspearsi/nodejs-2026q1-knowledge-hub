@@ -6,37 +6,48 @@ import {
   Param,
   Delete,
   HttpCode,
+  HttpStatus,
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { GetCommentsQueryDto } from './dto/get-comments-query';
+import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreateComment,
+  ApiDeleteComment,
+  ApiGetCommentById,
+  ApiGetComments,
+} from '../common/decorators/comment.decorator';
 
+@ApiTags('Comment')
 @Controller('comment')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
+  @ApiGetComments()
   @Get()
-  @HttpCode(200)
   findAll(@Query() query: GetCommentsQueryDto) {
     return this.commentService.findAll(query);
   }
 
+  @ApiGetCommentById()
   @Get(':id')
-  @HttpCode(200)
   findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.commentService.findOne(id);
   }
 
+  @ApiCreateComment()
   @Post()
-  @HttpCode(201)
+  @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateCommentDto) {
     return this.commentService.create(dto);
   }
 
+  @ApiDeleteComment()
   @Delete(':id')
-  @HttpCode(204)
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.commentService.remove(id);
   }

@@ -18,26 +18,32 @@ export class ArticleService {
     let articles = this.articleStorage.findAll();
 
     if (query.status) {
-      articles = articles.filter((article) => article.status === query.status);
+      articles = articles.filter((a) => a.status === query.status);
     }
 
     if (query.authorId) {
-      articles = articles.filter(
-        (article) => article.authorId === query.authorId,
-      );
+      articles = articles.filter((a) => a.authorId === query.authorId);
     }
 
     if (query.categoryId) {
-      articles = articles.filter(
-        (article) => article.categoryId === query.categoryId,
-      );
+      articles = articles.filter((a) => a.categoryId === query.categoryId);
     }
 
     if (query.tag) {
-      articles = articles.filter((article) => article.tags.includes(query.tag));
+      articles = articles.filter((a) => a.tags.includes(query.tag));
     }
 
-    return articles;
+    if (query.status || query.authorId || query.categoryId || query.tag) {
+      return articles;
+    }
+
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+
+    const start = (page - 1) * limit;
+    const end = start + limit;
+
+    return articles.slice(start, end);
   }
 
   findById(id: string) {

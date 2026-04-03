@@ -7,36 +7,49 @@ import {
   Delete,
   Put,
   HttpCode,
+  HttpStatus,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreateUser,
+  ApiDeleteUser,
+  ApiGetUserById,
+  ApiGetUsers,
+  ApiUpdateUserPassword,
+} from '../common/decorators/user.decorator';
 
+@ApiTags('User')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @ApiGetUsers()
   @Get()
-  @HttpCode(200)
   findAll() {
     return this.userService.findAll();
   }
 
+  @ApiGetUserById()
   @Get(':id')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.userService.findById(id);
   }
 
+  @ApiCreateUser()
   @Post()
-  @HttpCode(201)
+  @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateUserDto) {
     return this.userService.create(dto);
   }
 
+  @ApiUpdateUserPassword()
   @Put(':id')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdatePasswordDto,
@@ -44,8 +57,9 @@ export class UserController {
     return this.userService.update(id, dto);
   }
 
+  @ApiDeleteUser()
   @Delete(':id')
-  @HttpCode(204)
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.userService.remove(id);
   }

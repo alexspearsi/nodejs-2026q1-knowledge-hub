@@ -10,6 +10,10 @@ import { Type } from 'class-transformer';
 import { ArticleStatus } from './create-article.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
+export enum SortOrder {
+  ASC = 'asc',
+  DESC = 'desc',
+}
 export class GetArticlesQueryDto {
   @ApiPropertyOptional({
     enum: ArticleStatus,
@@ -53,16 +57,33 @@ export class GetArticlesQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number = 1;
+  page?: number;
 
   @ApiPropertyOptional({
     description: 'Items per page',
     example: 10,
-    default: 10,
   })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  limit: number = 10;
+  limit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Field to sort by',
+    example: 'createdAt',
+    enum: ['createdAt', 'updatedAt', 'title'],
+  })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sort order',
+    enum: SortOrder,
+    example: SortOrder.DESC,
+  })
+  @IsOptional()
+  @IsEnum(SortOrder)
+  order?: SortOrder = SortOrder.DESC;
 }

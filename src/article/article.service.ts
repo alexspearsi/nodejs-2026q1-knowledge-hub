@@ -4,7 +4,7 @@ import { ArticleStatus, CreateArticleDto } from './dto/create-article.dto';
 import { randomUUID } from 'crypto';
 import { Article } from './article.interface';
 import { UpdateArticleDto } from './dto/update-article.dto';
-import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
+import { GetArticlesQueryDto, SortOrder } from './dto/get-articles-query.dto';
 import { CommentStorageService } from '../database/comment.storage.service';
 
 @Injectable()
@@ -33,17 +33,34 @@ export class ArticleService {
       articles = articles.filter((a) => a.tags.includes(query.tag));
     }
 
-    if (query.status || query.authorId || query.categoryId || query.tag) {
-      return articles;
+    if (query.sortBy) {
+      const order = query.order ?? SortOrder.DESC;
+      articles = [...articles].sort((a, b) => {
+        const first = a[query.sortBy];
+        const second = b[query.sortBy];
+
+        if (first < second) {
+          return order === SortOrder.ASC ? -1 : 1;
+        }
+
+        if (first > second) {
+          return order === SortOrder.ASC ? 1 : -1;
+        }
+
+        return 0;
+      });
     }
 
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
+    if (query.page !== undefined || query.limit !== undefined) {
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 10;
+      const total = articles.length;
+      const data = articles.slice((page - 1) * limit, page * limit);
 
-    const start = (page - 1) * limit;
-    const end = start + limit;
+      return { total, page, limit, data };
+    }
 
-    return articles.slice(start, end);
+    return articles;
   }
 
   findById(id: string) {

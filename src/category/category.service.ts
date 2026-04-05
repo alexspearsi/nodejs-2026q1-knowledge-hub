@@ -15,7 +15,7 @@ export class CategoryService {
     private readonly articleStorage: ArticleStorageService,
   ) {}
 
-  findAll(query: GetCategoriesQueryDto) {
+  findAll(query?: GetCategoriesQueryDto) {
     let categories = this.categoryStorage.findAll();
 
     if (query.sortBy) {

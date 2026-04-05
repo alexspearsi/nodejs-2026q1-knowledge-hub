@@ -20,7 +20,7 @@ export class UserService {
     private readonly commentStorage: CommentStorageService,
   ) {}
 
-  findAll(query: GetUsersQueryDto) {
+  findAll(query?: GetUsersQueryDto) {
     let users = this.userStorage
       .findAll()
       .map(({ id, login, role, createdAt, updatedAt }) => ({

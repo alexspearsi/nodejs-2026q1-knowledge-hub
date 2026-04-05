@@ -15,7 +15,7 @@ export class ArticleService {
     private readonly commentStorage: CommentStorageService,
   ) {}
 
-  findAll(query: GetArticlesQueryDto) {
+  findAll(query?: GetArticlesQueryDto) {
     let articles = this.articleStorage.findAll();
 
     if (query.status) {

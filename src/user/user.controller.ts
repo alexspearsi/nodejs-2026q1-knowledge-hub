@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -21,6 +22,7 @@ import {
   ApiGetUsers,
   ApiUpdateUserPassword,
 } from '../common/decorators/user.decorator';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -29,8 +31,8 @@ export class UserController {
 
   @ApiGetUsers()
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  findAll(@Query() query: GetUsersQueryDto) {
+    return this.userService.findAll(query);
   }
 
   @ApiGetUserById()

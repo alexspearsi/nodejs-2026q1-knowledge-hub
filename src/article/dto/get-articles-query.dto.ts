@@ -9,11 +9,8 @@ import {
 import { Type } from 'class-transformer';
 import { ArticleStatus } from './create-article.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { SortOrder } from '../../common/types';
 
-export enum SortOrder {
-  ASC = 'asc',
-  DESC = 'desc',
-}
 export class GetArticlesQueryDto {
   @ApiPropertyOptional({
     enum: ArticleStatus,

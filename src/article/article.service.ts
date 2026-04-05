@@ -4,8 +4,9 @@ import { ArticleStatus, CreateArticleDto } from './dto/create-article.dto';
 import { randomUUID } from 'crypto';
 import { Article } from './article.interface';
 import { UpdateArticleDto } from './dto/update-article.dto';
-import { GetArticlesQueryDto, SortOrder } from './dto/get-articles-query.dto';
+import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { CommentStorageService } from '../database/comment.storage.service';
+import { SortOrder } from '../common/types';
 
 @Injectable()
 export class ArticleService {

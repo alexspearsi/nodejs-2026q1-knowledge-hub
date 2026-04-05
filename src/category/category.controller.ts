@@ -9,6 +9,7 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -21,6 +22,7 @@ import {
   ApiGetCategoryById,
   ApiUpdateCategory,
 } from '../common/decorators/category.decorator';
+import { GetCategoriesQueryDto } from './dto/get-category-query.dto';
 
 @ApiTags('Category')
 @Controller('category')
@@ -29,8 +31,8 @@ export class CategoryController {
 
   @ApiGetCategories()
   @Get()
-  findAll() {
-    return this.categoryService.findAll();
+  findAll(@Query() query: GetCategoriesQueryDto) {
+    return this.categoryService.findAll(query);
   }
 
   @ApiGetCategoryById()

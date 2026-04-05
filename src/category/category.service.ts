@@ -5,6 +5,8 @@ import { CategoryStorageService } from '../database/category.storage.service';
 import { randomUUID } from 'crypto';
 import { Category } from './category.interface';
 import { ArticleStorageService } from '../database/article.storage.service';
+import { GetCategoriesQueryDto } from './dto/get-category-query.dto';
+import { SortOrder } from '../common/types';
 
 @Injectable()
 export class CategoryService {
@@ -13,8 +15,37 @@ export class CategoryService {
     private readonly articleStorage: ArticleStorageService,
   ) {}
 
-  findAll() {
-    return this.categoryStorage.findAll();
+  findAll(query: GetCategoriesQueryDto) {
+    let categories = this.categoryStorage.findAll();
+
+    if (query.sortBy) {
+      const order = query.order ?? SortOrder.DESC;
+      categories = [...categories].sort((a, b) => {
+        const first = a[query.sortBy];
+        const second = b[query.sortBy];
+
+        if (first < second) {
+          return order === SortOrder.ASC ? -1 : 1;
+        }
+
+        if (first > second) {
+          return order === SortOrder.ASC ? 1 : -1;
+        }
+
+        return 0;
+      });
+    }
+
+    if (query.page !== undefined || query.limit !== undefined) {
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 10;
+      const total = categories.length;
+      const data = categories.slice((page - 1) * limit, page * limit);
+
+      return { total, page, limit, data };
+    }
+
+    return categories;
   }
 
   findById(id: string) {

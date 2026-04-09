@@ -1,9 +1,14 @@
 # Knowledge Hub 
 
+## Docker Hub
+
+Docker image: `alexspearsi/knowledge-hub:latest`
+
 ## Prerequisites
 
 - Git - [Download & Install Git](https://git-scm.com/downloads).
 - Node.js - [Download & Install Node.js](https://nodejs.org/en/download/) and the npm package manager.
+- Docker - [Download & Install Docker](https://docs.docker.com/engine/install/)
 
 ## Downloading
 
@@ -18,6 +23,23 @@ npm install
 ```
 
 ## Running application
+
+### With Docker (recommended)
+
+1. Copy `.env.example` to `.env` and fill in the values
+2. Start all services:
+```
+docker-compose up --build
+```
+
+App will be available at http://localhost:4000, OpenAPI docs at http://localhost:4000/doc/.
+
+To start Adminer (DB UI) on http://localhost:8080:
+```
+docker-compose --profile debug up --build
+```
+
+### Without Docker
 
 ```
 npm start

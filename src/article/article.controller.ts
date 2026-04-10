@@ -1,27 +1,30 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Param,
-  Delete,
+  // Post,
+  // Body,
+  // Param,
+  // Delete,
   HttpCode,
   HttpStatus,
-  Put,
+  Param,
   ParseUUIDPipe,
+  // Put,
+  // ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
-import { CreateArticleDto } from './dto/create-article.dto';
-import { UpdateArticleDto } from './dto/update-article.dto';
+// import { CreateArticleDto } from './dto/create-article.dto';
+// import { UpdateArticleDto } from './dto/update-article.dto';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { ApiTags } from '@nestjs/swagger';
 import {
-  ApiCreateArticle,
-  ApiDeleteArticle,
   ApiGetArticleById,
+  // ApiCreateArticle,
+  // ApiDeleteArticle,
+  // ApiGetArticleById,
   ApiGetArticles,
-  ApiUpdateArticle,
+  // ApiUpdateArticle,
 } from '../common/decorators/article.decorator';
 
 @ApiTags('Articles')
@@ -43,27 +46,27 @@ export class ArticleController {
     return this.articleService.findById(id);
   }
 
-  @ApiCreateArticle()
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateArticleDto) {
-    return this.articleService.create(dto);
-  }
+  // @ApiCreateArticle()
+  // @Post()
+  // @HttpCode(HttpStatus.CREATED)
+  // create(@Body() dto: CreateArticleDto) {
+  //   return this.articleService.create(dto);
+  // }
 
-  @ApiUpdateArticle()
-  @Put(':id')
-  @HttpCode(HttpStatus.OK)
-  update(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Body() dto: UpdateArticleDto,
-  ) {
-    return this.articleService.update(id, dto);
-  }
+  // @ApiUpdateArticle()
+  // @Put(':id')
+  // @HttpCode(HttpStatus.OK)
+  // update(
+  //   @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  //   @Body() dto: UpdateArticleDto,
+  // ) {
+  //   return this.articleService.update(id, dto);
+  // }
 
-  @ApiDeleteArticle()
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    return this.articleService.remove(id);
-  }
+  // @ApiDeleteArticle()
+  // @Delete(':id')
+  // @HttpCode(HttpStatus.NO_CONTENT)
+  // remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  //   return this.articleService.remove(id);
+  // }
 }

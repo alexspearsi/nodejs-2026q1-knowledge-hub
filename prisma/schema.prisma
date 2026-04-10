@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  admin
+  editor
+  viewer
+}
+
+model User {
+  id String @id @default(uuid())
+  login String
+  password String
+  role UserRole @default(viewer)
+
+  articles Article[]
+  comments Comment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+enum ArticleStatus {
+  draft
+  published
+  archived
+}
+
+model Article {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  status     ArticleStatus @default(draft)
+
+  authorId   String? @map("author_id")
+  categoryId String? @map("category_id")
+
+  author User? @relation(fields: [authorId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  tags       String[]
+
+  comments Comment[]
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt  @map("updated_at")
+
+  @@map("articles")
+}
+
+model Category {
+  id String @id @default(uuid())
+  name String
+  description String
+
+  articles Article[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("categories")
+}
+
+model Comment {
+  id String @id @default(uuid())
+
+  content String
+  articleId String @map("article_id")
+  authorId String  @map("author_id")
+
+  article Article @relation(fields: [articleId], references: [id])
+  author User? @relation(fields: [authorId], references: [id])
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("comments")
+}

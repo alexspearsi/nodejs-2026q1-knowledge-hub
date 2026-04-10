@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   // Post,
@@ -9,6 +10,8 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Post,
+  Put,
   // Put,
   // ParseUUIDPipe,
   Query,
@@ -19,13 +22,17 @@ import { ArticleService } from './article.service';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { ApiTags } from '@nestjs/swagger';
 import {
+  ApiCreateArticle,
   ApiGetArticleById,
   // ApiCreateArticle,
   // ApiDeleteArticle,
   // ApiGetArticleById,
   ApiGetArticles,
+  ApiUpdateArticle,
   // ApiUpdateArticle,
 } from '../common/decorators/article.decorator';
+import { CreateArticleDto } from './dto/create-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
 @ApiTags('Articles')
 @Controller('article')
@@ -46,22 +53,22 @@ export class ArticleController {
     return this.articleService.findById(id);
   }
 
-  // @ApiCreateArticle()
-  // @Post()
-  // @HttpCode(HttpStatus.CREATED)
-  // create(@Body() dto: CreateArticleDto) {
-  //   return this.articleService.create(dto);
-  // }
+  @ApiCreateArticle()
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  create(@Body() dto: CreateArticleDto) {
+    return this.articleService.create(dto);
+  }
 
-  // @ApiUpdateArticle()
-  // @Put(':id')
-  // @HttpCode(HttpStatus.OK)
-  // update(
-  //   @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  //   @Body() dto: UpdateArticleDto,
-  // ) {
-  //   return this.articleService.update(id, dto);
-  // }
+  @ApiUpdateArticle()
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  update(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() dto: UpdateArticleDto,
+  ) {
+    return this.articleService.update(id, dto);
+  }
 
   // @ApiDeleteArticle()
   // @Delete(':id')

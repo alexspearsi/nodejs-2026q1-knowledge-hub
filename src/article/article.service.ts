@@ -8,13 +8,20 @@ import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 // import { CommentStorageService } from '../database/comment.storage.service';
 import { SortOrder } from '../common/types';
 import { PrismaService } from '../prisma/prisma.service';
+import { ArticleStatus, CreateArticleDto } from './dto/create-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
 @Injectable()
 export class ArticleService {
+  update(id: string, dto: UpdateArticleDto) {
+    throw new Error('Method not implemented.');
+  }
   constructor(private readonly prismaService: PrismaService) {}
 
   async findAll(query?: GetArticlesQueryDto) {
-    let articles = await this.prismaService.article.findMany();
+    let articles = await this.prismaService.article.findMany({
+      include: { tags: true },
+    });
 
     if (query.status) {
       articles = articles.filter((a) => a.status === query.status);
@@ -29,7 +36,9 @@ export class ArticleService {
     }
 
     if (query.tag) {
-      articles = articles.filter((a) => a.tags.includes(query.tag));
+      articles = articles.filter((a) =>
+        a.tags.some((tag) => tag.name === query.tag),
+      );
     }
 
     if (query.sortBy) {
@@ -76,26 +85,37 @@ export class ArticleService {
     return article;
   }
 
-  // create(dto: CreateArticleDto) {
-  //   const id = randomUUID();
-  //   const now = Date.now();
+  async create(dto: CreateArticleDto) {
+    const article = await this.prismaService.article.create({
+      data: {
+        title: dto.title,
+        content: dto.content,
+        status: dto.status ?? ArticleStatus.DRAFT,
 
-  //   const newArticle: Article = {
-  //     id,
-  //     title: dto.title,
-  //     content: dto.content,
-  //     status: dto.status ?? ArticleStatus.DRAFT,
-  //     authorId: dto.authorId ?? null,
-  //     categoryId: dto.categoryId ?? null,
-  //     tags: dto.tags ?? [],
-  //     createdAt: now,
-  //     updatedAt: now,
-  //   };
+        author: dto.authorId ? { connect: { id: dto.authorId } } : undefined,
 
-  //   this.articleStorage.create(newArticle);
+        category: dto.categoryId
+          ? { connect: { id: dto.categoryId } }
+          : undefined,
 
-  //   return newArticle;
-  // }
+        tags: dto.tags
+          ? {
+              connectOrCreate: dto.tags.map((tag) => ({
+                where: { name: tag },
+                create: { name: tag },
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        tags: true,
+        author: true,
+        category: true,
+      },
+    });
+
+    return article;
+  }
 
   // update(id: string, dto: UpdateArticleDto) {
   //   const article = this.findById(id);

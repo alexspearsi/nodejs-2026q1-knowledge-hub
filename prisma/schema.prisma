@@ -52,7 +52,7 @@ model Article {
   author User? @relation(fields: [authorId], references: [id])
   category Category? @relation(fields: [categoryId], references: [id])
 
-  tags       String[]
+  tags       Tag[]
 
   comments Comment[]
 
@@ -69,9 +69,6 @@ model Category {
 
   articles Article[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-
   @@map("categories")
 }
 
@@ -86,7 +83,15 @@ model Comment {
   author User? @relation(fields: [authorId], references: [id])
   
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("comments")
+}
+
+model Tag {
+  id String @id @default(uuid())
+  name String @unique
+
+  articles Article[]
+
+  @@map("tags")
 }

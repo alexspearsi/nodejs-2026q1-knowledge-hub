@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   // Post,
   // Body,
@@ -23,6 +24,7 @@ import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { ApiTags } from '@nestjs/swagger';
 import {
   ApiCreateArticle,
+  ApiDeleteArticle,
   ApiGetArticleById,
   // ApiCreateArticle,
   // ApiDeleteArticle,
@@ -70,10 +72,10 @@ export class ArticleController {
     return this.articleService.update(id, dto);
   }
 
-  // @ApiDeleteArticle()
-  // @Delete(':id')
-  // @HttpCode(HttpStatus.NO_CONTENT)
-  // remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-  //   return this.articleService.remove(id);
-  // }
+  @ApiDeleteArticle()
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.articleService.remove(id);
+  }
 }

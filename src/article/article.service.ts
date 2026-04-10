@@ -1,11 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-// import { ArticleStorageService } from '../database/article.storage.service';
-// import { ArticleStatus, CreateArticleDto } from './dto/create-article.dto';
-// import { randomUUID } from 'crypto';
-// import { Article } from './article.interface';
-// import { UpdateArticleDto } from './dto/update-article.dto';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
-// import { CommentStorageService } from '../database/comment.storage.service';
 import { SortOrder } from '../common/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { ArticleStatus, CreateArticleDto } from './dto/create-article.dto';
@@ -13,9 +7,6 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 
 @Injectable()
 export class ArticleService {
-  update(id: string, dto: UpdateArticleDto) {
-    throw new Error('Method not implemented.');
-  }
   constructor(private readonly prismaService: PrismaService) {}
 
   async findAll(query?: GetArticlesQueryDto) {
@@ -117,24 +108,32 @@ export class ArticleService {
     return article;
   }
 
-  // update(id: string, dto: UpdateArticleDto) {
-  //   const article = this.findById(id);
+  async update(id: string, dto: UpdateArticleDto) {
+    await this.findById(id);
 
-  //   Object.assign(article, dto, { updatedAt: Date.now() });
+    const article = await this.prismaService.article.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        content: dto.content,
+        status: dto.status,
+      },
+    });
 
-  //   return article;
-  // }
+    return article;
+  }
 
-  // remove(id: string) {
-  //   const deleted = this.articleStorage.delete(id);
+  async remove(id: string) {
+    await this.findById(id);
 
-  //   if (!deleted) {
-  //     throw new NotFoundException('Article not found');
-  //   }
+    await this.prismaService.$transaction([
+      this.prismaService.comment.deleteMany({
+        where: { articleId: id },
+      }),
 
-  //   this.commentStorage
-  //     .findAll()
-  //     .filter((comment) => comment.articleId === id)
-  //     .forEach((comment) => this.commentStorage.delete(comment.id));
-  // }
+      this.prismaService.article.delete({
+        where: { id },
+      }),
+    ]);
+  }
 }

@@ -77,7 +77,7 @@ model Comment {
 
   content String
   articleId String @map("article_id")
-  authorId String  @map("author_id")
+  authorId String?  @map("author_id")
 
   article Article @relation(fields: [articleId], references: [id])
   author User? @relation(fields: [authorId], references: [id])

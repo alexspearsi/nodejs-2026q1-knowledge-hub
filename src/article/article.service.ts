@@ -4,9 +4,6 @@ import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { SortOrder } from '../common/types';
 import { CreateArticleDto, ArticleStatus } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
-import { Prisma } from '../generated/prisma/client';
-
-type ArticleWithTags = Prisma.ArticleGetPayload<{ include: { tags: true } }>;
 
 @Injectable()
 export class ArticleService {
@@ -31,7 +28,13 @@ export class ArticleService {
       },
     });
 
-    let result = articles.map((a) => this.mapArticle(a));
+    let result = articles.map((article) => ({
+      ...article,
+
+      tags: article.tags?.map((tag) => tag.name) ?? [],
+      createdAt: article.createdAt.getTime(),
+      updatedAt: article.updatedAt.getTime(),
+    }));
 
     if (query?.sortBy) {
       const order = query.order ?? SortOrder.DESC;
@@ -73,7 +76,13 @@ export class ArticleService {
       throw new NotFoundException('Article not found');
     }
 
-    return this.mapArticle(article);
+    return {
+      ...article,
+
+      tags: article.tags?.map((tag) => tag.name) ?? [],
+      createdAt: article.createdAt.getTime(),
+      updatedAt: article.updatedAt.getTime(),
+    };
   }
 
   async create(dto: CreateArticleDto) {
@@ -105,7 +114,13 @@ export class ArticleService {
       },
     });
 
-    return this.mapArticle(article);
+    return {
+      ...article,
+
+      tags: article.tags?.map((tag) => tag.name) ?? [],
+      createdAt: article.createdAt.getTime(),
+      updatedAt: article.updatedAt.getTime(),
+    };
   }
 
   async update(id: string, dto: UpdateArticleDto) {
@@ -139,32 +154,21 @@ export class ArticleService {
       },
     });
 
-    return this.mapArticle(article);
+    return {
+      ...article,
+
+      tags: article.tags?.map((tag) => tag.name) ?? [],
+      createdAt: article.createdAt.getTime(),
+      updatedAt: article.updatedAt.getTime(),
+    };
   }
 
   async remove(id: string) {
     await this.findById(id);
 
-    await this.prismaService.$transaction([
-      this.prismaService.comment.deleteMany({
-        where: { articleId: id },
-      }),
-
-      this.prismaService.article.delete({
-        where: { id },
-      }),
-    ]);
-  }
-
-  private mapArticle(article: ArticleWithTags) {
-    return {
-      ...article,
-
-      tags: article.tags?.map((tag) => tag.name) ?? [],
-
-      createdAt: article.createdAt.getTime(),
-
-      updatedAt: article.updatedAt.getTime(),
-    };
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.comment.deleteMany({ where: { articleId: id } });
+      await tx.article.delete({ where: { id } });
+    });
   }
 }

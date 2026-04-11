@@ -47,8 +47,8 @@ export class CommentService {
     const comment = await this.prismaService.comment.create({
       data: {
         content: dto.content,
-        articleId: dto.articleId,
-        authorId: dto.authorId ?? null,
+        article: { connect: { id: dto.articleId } },
+        author: dto.authorId ? { connect: { id: dto.authorId } } : undefined,
       },
     });
 

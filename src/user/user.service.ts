@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -16,15 +15,21 @@ export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async findAll(query?: GetUsersQueryDto) {
-    let users = await this.prismaService.user.findMany({
-      select: {
-        id: true,
-        login: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    let users = (
+      await this.prismaService.user.findMany({
+        select: {
+          id: true,
+          login: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      })
+    ).map((user) => ({
+      ...user,
+      createdAt: user.createdAt.getTime(),
+      updatedAt: user.updatedAt.getTime(),
+    }));
 
     if (query.sortBy) {
       const order = query.order ?? SortOrder.DESC;
@@ -58,9 +63,7 @@ export class UserService {
 
   async findById(id: string) {
     const user = await this.prismaService.user.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
       select: {
         id: true,
         login: true,
@@ -74,18 +77,14 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return {
+      ...user,
+      createdAt: user.createdAt.getTime(),
+      updatedAt: user.updatedAt.getTime(),
+    };
   }
 
   async create(dto: CreateUserDto) {
-    const existing = await this.prismaService.user.findUnique({
-      where: { login: dto.login },
-    });
-
-    if (existing) {
-      throw new ConflictException('User with this login already exists');
-    }
-
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const user = await this.prismaService.user.create({
@@ -103,7 +102,11 @@ export class UserService {
       },
     });
 
-    return user;
+    return {
+      ...user,
+      createdAt: user.createdAt.getTime(),
+      updatedAt: user.updatedAt.getTime(),
+    };
   }
 
   async update(id: string, dto: UpdatePasswordDto) {
@@ -125,9 +128,7 @@ export class UserService {
 
     const user = await this.prismaService.user.update({
       where: { id },
-      data: {
-        password: hashedPassword,
-      },
+      data: { password: hashedPassword },
       select: {
         id: true,
         login: true,
@@ -137,29 +138,23 @@ export class UserService {
       },
     });
 
-    return user;
+    return {
+      ...user,
+      createdAt: user.createdAt.getTime(),
+      updatedAt: user.updatedAt.getTime(),
+    };
   }
 
   async remove(id: string) {
     await this.findById(id);
 
-    await this.prismaService.$transaction([
-      this.prismaService.article.updateMany({
-        where: {
-          authorId: id,
-        },
-        data: {
-          authorId: null,
-        },
-      }),
-
-      this.prismaService.comment.deleteMany({
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.article.updateMany({
         where: { authorId: id },
-      }),
-
-      this.prismaService.user.delete({
-        where: { id },
-      }),
-    ]);
+        data: { authorId: null },
+      });
+      await tx.comment.deleteMany({ where: { authorId: id } });
+      await tx.user.delete({ where: { id } });
+    });
   }
 }

@@ -6,9 +6,17 @@ import { ArticleModule } from './article/article.module';
 import { CategoryModule } from './category/category.module';
 import { CommentModule } from './comment/comment.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
-  imports: [UserModule, ArticleModule, CategoryModule, CommentModule, PrismaModule],
+  imports: [
+    UserModule,
+    ArticleModule,
+    CategoryModule,
+    CommentModule,
+    PrismaModule,
+    DatabaseModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

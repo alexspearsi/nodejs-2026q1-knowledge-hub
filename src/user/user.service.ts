@@ -1,35 +1,30 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserDto, UserRole } from './dto/create-user.dto';
-import { randomUUID } from 'node:crypto';
-import { UpdatePasswordDto } from './dto/update-password.dto';
-import { UserStorageService } from '../database/user.storage.service';
-import { ArticleStorageService } from '../database/article.storage.service';
-import { CommentStorageService } from '../database/comment.storage.service';
+import * as bcrypt from 'bcrypt';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { SortOrder } from '../common/types';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateUserDto, UserRole } from './dto/create-user.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Injectable()
 export class UserService {
-  constructor(
-    private readonly userStorage: UserStorageService,
-    private readonly articleStorage: ArticleStorageService,
-    private readonly commentStorage: CommentStorageService,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
-  findAll(query?: GetUsersQueryDto) {
-    let users = this.userStorage
-      .findAll()
-      .map(({ id, login, role, createdAt, updatedAt }) => ({
-        id,
-        login,
-        role,
-        createdAt,
-        updatedAt,
-      }));
+  async findAll(query?: GetUsersQueryDto) {
+    let users = await this.prismaService.user.findMany({
+      select: {
+        id: true,
+        login: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
 
     if (query.sortBy) {
       const order = query.order ?? SortOrder.DESC;
@@ -61,89 +56,110 @@ export class UserService {
     return users;
   }
 
-  findById(id: string) {
-    const user = this.userStorage.findById(id);
+  async findById(id: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: id,
+      },
+      select: {
+        id: true,
+        login: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    return {
-      id: user.id,
-      login: user.login,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+    return user;
   }
 
-  create(dto: CreateUserDto) {
-    const { login, password, role = UserRole.VIEWER } = dto;
+  async create(dto: CreateUserDto) {
+    const existing = await this.prismaService.user.findUnique({
+      where: { login: dto.login },
+    });
 
-    const id = randomUUID();
-    const now = Date.now();
+    if (existing) {
+      throw new ConflictException('User with this login already exists');
+    }
 
-    const newUser = {
-      id,
-      login,
-      password,
-      role,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    const createdUser = this.userStorage.create(newUser);
+    const user = await this.prismaService.user.create({
+      data: {
+        login: dto.login,
+        password: hashedPassword,
+        role: dto.role ?? UserRole.VIEWER,
+      },
+      select: {
+        id: true,
+        login: true,
+        role: true,
+        updatedAt: true,
+        createdAt: true,
+      },
+    });
 
-    return {
-      id: createdUser.id,
-      login: createdUser.login,
-      role: createdUser.role,
-      createdAt: createdUser.createdAt,
-      updatedAt: createdUser.updatedAt,
-    };
+    return user;
   }
 
-  update(id: string, dto: UpdatePasswordDto) {
-    const user = this.userStorage.findById(id);
+  async update(id: string, dto: UpdatePasswordDto) {
+    const existing = await this.prismaService.user.findUnique({
+      where: { id },
+    });
 
-    if (!user) {
+    if (!existing) {
       throw new NotFoundException('User not found');
     }
 
-    if (user.password !== dto.oldPassword) {
+    const isValid = await bcrypt.compare(dto.oldPassword, existing.password);
+
+    if (!isValid) {
       throw new ForbiddenException('Old password is incorrect');
     }
 
-    user.password = dto.newPassword;
-    user.updatedAt = Date.now();
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
-    return {
-      id: user.id,
-      login: user.login,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+    const user = await this.prismaService.user.update({
+      where: { id },
+      data: {
+        password: hashedPassword,
+      },
+      select: {
+        id: true,
+        login: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return user;
   }
 
-  remove(id: string) {
-    const deleted = this.userStorage.delete(id);
+  async remove(id: string) {
+    await this.findById(id);
 
-    if (!deleted) {
-      throw new NotFoundException('User not found');
-    }
+    await this.prismaService.$transaction([
+      this.prismaService.article.updateMany({
+        where: {
+          authorId: id,
+        },
+        data: {
+          authorId: null,
+        },
+      }),
 
-    this.articleStorage
-      .findAll()
-      .filter((article) => article.authorId === id)
-      .forEach((article) => {
-        article.authorId = null;
-        article.updatedAt = Date.now();
-      });
+      this.prismaService.comment.deleteMany({
+        where: { authorId: id },
+      }),
 
-    this.commentStorage
-      .findAll()
-      .filter((comment) => comment.authorId === id)
-      .forEach((comment) => this.commentStorage.delete(comment.id));
+      this.prismaService.user.delete({
+        where: { id },
+      }),
+    ]);
   }
 }

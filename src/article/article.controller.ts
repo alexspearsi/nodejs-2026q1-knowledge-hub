@@ -3,35 +3,23 @@ import {
   Controller,
   Delete,
   Get,
-  // Post,
-  // Body,
-  // Param,
-  // Delete,
   HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
-  // Put,
-  // ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
-// import { CreateArticleDto } from './dto/create-article.dto';
-// import { UpdateArticleDto } from './dto/update-article.dto';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { ApiTags } from '@nestjs/swagger';
 import {
   ApiCreateArticle,
   ApiDeleteArticle,
   ApiGetArticleById,
-  // ApiCreateArticle,
-  // ApiDeleteArticle,
-  // ApiGetArticleById,
   ApiGetArticles,
   ApiUpdateArticle,
-  // ApiUpdateArticle,
 } from '../common/decorators/article.decorator';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';

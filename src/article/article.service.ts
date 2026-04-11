@@ -1,71 +1,71 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { SortOrder } from '../common/types';
-import { PrismaService } from '../prisma/prisma.service';
-import { ArticleStatus, CreateArticleDto } from './dto/create-article.dto';
+import { CreateArticleDto, ArticleStatus } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { Prisma } from '../generated/prisma/client';
+
+type ArticleWithTags = Prisma.ArticleGetPayload<{ include: { tags: true } }>;
 
 @Injectable()
 export class ArticleService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async findAll(query?: GetArticlesQueryDto) {
-    let articles = await this.prismaService.article.findMany({
-      include: { tags: true },
+    const articles = await this.prismaService.article.findMany({
+      where: {
+        status: query?.status,
+        authorId: query?.authorId,
+        categoryId: query?.categoryId,
+        tags: query?.tag
+          ? {
+              some: {
+                name: query.tag,
+              },
+            }
+          : undefined,
+      },
+      include: {
+        tags: true,
+      },
     });
 
-    if (query.status) {
-      articles = articles.filter((a) => a.status === query.status);
-    }
+    let result = articles.map((a) => this.mapArticle(a));
 
-    if (query.authorId) {
-      articles = articles.filter((a) => a.authorId === query.authorId);
-    }
-
-    if (query.categoryId) {
-      articles = articles.filter((a) => a.categoryId === query.categoryId);
-    }
-
-    if (query.tag) {
-      articles = articles.filter((a) =>
-        a.tags.some((tag) => tag.name === query.tag),
-      );
-    }
-
-    if (query.sortBy) {
+    if (query?.sortBy) {
       const order = query.order ?? SortOrder.DESC;
-      articles = [...articles].sort((a, b) => {
+
+      result = [...result].sort((a, b) => {
         const first = a[query.sortBy];
         const second = b[query.sortBy];
 
-        if (first < second) {
-          return order === SortOrder.ASC ? -1 : 1;
-        }
-
-        if (first > second) {
-          return order === SortOrder.ASC ? 1 : -1;
-        }
-
+        if (first < second) return order === SortOrder.ASC ? -1 : 1;
+        if (first > second) return order === SortOrder.ASC ? 1 : -1;
         return 0;
       });
     }
 
-    if (query.page !== undefined || query.limit !== undefined) {
+    if (query?.page !== undefined || query?.limit !== undefined) {
       const page = query.page ?? 1;
       const limit = query.limit ?? 10;
-      const total = articles.length;
-      const data = articles.slice((page - 1) * limit, page * limit);
+
+      const total = result.length;
+      const data = result.slice((page - 1) * limit, page * limit);
 
       return { total, page, limit, data };
     }
 
-    return articles;
+    return result;
   }
 
   async findById(id: string) {
     const article = await this.prismaService.article.findUnique({
-      where: {
-        id: id,
+      where: { id },
+      include: {
+        tags: true,
+        category: true,
+        author: true,
       },
     });
 
@@ -73,7 +73,7 @@ export class ArticleService {
       throw new NotFoundException('Article not found');
     }
 
-    return article;
+    return this.mapArticle(article);
   }
 
   async create(dto: CreateArticleDto) {
@@ -89,7 +89,7 @@ export class ArticleService {
           ? { connect: { id: dto.categoryId } }
           : undefined,
 
-        tags: dto.tags
+        tags: dto.tags?.length
           ? {
               connectOrCreate: dto.tags.map((tag) => ({
                 where: { name: tag },
@@ -100,12 +100,12 @@ export class ArticleService {
       },
       include: {
         tags: true,
-        author: true,
         category: true,
+        author: true,
       },
     });
 
-    return article;
+    return this.mapArticle(article);
   }
 
   async update(id: string, dto: UpdateArticleDto) {
@@ -117,10 +117,29 @@ export class ArticleService {
         title: dto.title,
         content: dto.content,
         status: dto.status,
+
+        category: dto.categoryId
+          ? { connect: { id: dto.categoryId } }
+          : { disconnect: true },
+
+        tags: dto.tags?.length
+          ? {
+              set: [],
+              connectOrCreate: dto.tags.map((tag) => ({
+                where: { name: tag },
+                create: { name: tag },
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        tags: true,
+        category: true,
+        author: true,
       },
     });
 
-    return article;
+    return this.mapArticle(article);
   }
 
   async remove(id: string) {
@@ -135,5 +154,17 @@ export class ArticleService {
         where: { id },
       }),
     ]);
+  }
+
+  private mapArticle(article: ArticleWithTags) {
+    return {
+      ...article,
+
+      tags: article.tags?.map((tag) => tag.name) ?? [],
+
+      createdAt: article.createdAt.getTime(),
+
+      updatedAt: article.updatedAt.getTime(),
+    };
   }
 }

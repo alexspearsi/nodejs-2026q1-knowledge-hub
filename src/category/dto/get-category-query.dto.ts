@@ -28,7 +28,7 @@ export class GetCategoriesQueryDto {
   @ApiPropertyOptional({
     description: 'Field to sort by',
     example: 'createdAt',
-    enum: ['createdAt', 'updatedAt', 'title'],
+    enum: ['id', 'name'],
   })
   @IsOptional()
   @IsString()

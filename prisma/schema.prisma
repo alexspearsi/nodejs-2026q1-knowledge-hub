@@ -49,8 +49,8 @@ model Article {
   authorId   String? @map("author_id")
   categoryId String? @map("category_id")
 
-  author User? @relation(fields: [authorId], references: [id])
-  category Category? @relation(fields: [categoryId], references: [id])
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   tags       Tag[]
 
@@ -79,8 +79,8 @@ model Comment {
   articleId String @map("article_id")
   authorId String?  @map("author_id")
 
-  article Article @relation(fields: [articleId], references: [id])
-  author User? @relation(fields: [authorId], references: [id])
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author User? @relation(fields: [authorId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now()) @map("created_at")
 

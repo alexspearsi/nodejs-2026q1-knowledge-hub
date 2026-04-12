@@ -1,19 +1,16 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
+  Controller,
   Delete,
-  Put,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   ParseUUIDPipe,
+  Post,
+  Put,
   Query,
 } from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdatePasswordDto } from './dto/update-password.dto';
 import { ApiTags } from '@nestjs/swagger';
 import {
   ApiCreateUser,
@@ -22,7 +19,10 @@ import {
   ApiGetUsers,
   ApiUpdateUserPassword,
 } from '../common/decorators/user.decorator';
+import { CreateUserDto } from './dto/create-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
+import { UserService } from './user.service';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @ApiTags('User')
 @Controller('user')

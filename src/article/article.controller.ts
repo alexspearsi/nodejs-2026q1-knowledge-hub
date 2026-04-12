@@ -1,19 +1,17 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
+  Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
-  Put,
+  Param,
   ParseUUIDPipe,
+  Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
-import { CreateArticleDto } from './dto/create-article.dto';
-import { UpdateArticleDto } from './dto/update-article.dto';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { ApiTags } from '@nestjs/swagger';
 import {
@@ -23,6 +21,8 @@ import {
   ApiGetArticles,
   ApiUpdateArticle,
 } from '../common/decorators/article.decorator';
+import { CreateArticleDto } from './dto/create-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
 @ApiTags('Articles')
 @Controller('article')

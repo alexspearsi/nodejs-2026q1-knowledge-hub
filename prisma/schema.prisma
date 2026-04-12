@@ -59,6 +59,8 @@ model Article {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt  @map("updated_at")
 
+  @@index([status])
+  @@index([categoryId])
   @@map("articles")
 }
 
@@ -93,5 +95,6 @@ model Tag {
 
   articles Article[]
 
+  @@index([name])
   @@map("tags")
 }

@@ -25,6 +25,7 @@ COPY package*.json ./
 
 RUN npm ci --omit=dev
 
+COPY prisma.config.ts ./
 COPY prisma ./prisma
 RUN npx prisma generate
 
@@ -35,4 +36,4 @@ USER appuser
 
 EXPOSE 4000
 
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]

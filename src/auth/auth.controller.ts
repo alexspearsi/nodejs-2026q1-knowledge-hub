@@ -1,6 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Post } from '@nestjs/common';
 import { SignupRequestDto } from './dto/signup.dto';
 import { Response } from 'express';
 
@@ -15,5 +21,14 @@ export class AuthController {
     @Body() dto: SignupRequestDto,
   ) {
     return await this.authService.signup(res, dto);
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async signin(
+    @Res({ passthrough: true }) res: Response,
+    @Body() dto: SignupRequestDto,
+  ) {
+    return await this.authService.login(res, dto);
   }
 }

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SignupRequestDto } from './dto/signup.dto';
 import { ConfigService } from '@nestjs/config';
@@ -28,32 +32,48 @@ export class AuthService {
   async signup(res: Response, dto: SignupRequestDto) {
     const { login, password } = dto;
 
-    const existuser = await this.prismaService.user.findUnique({
+    const existUser = await this.prismaService.user.findUnique({
       where: {
         login,
       },
     });
 
-    if (existuser) {
+    if (existUser) {
       throw new BadRequestException('Login already exists');
     }
 
     const hashedPassword = await bcrypt.hash(password, this.CRYPT_SALT);
 
-    const user = await this.prismaService.user.create({
+    await this.prismaService.user.create({
       data: {
         login,
         password: hashedPassword,
       },
     });
 
-    return this.auth(res, user);
+    return { message: 'User signed up' };
   }
 
-  private auth(res: Response, user) {
-    console.log(user);
+  async login(res: Response, dto: SignupRequestDto) {
+    const { login, password } = dto;
 
-    console.log(this.createTokens(user));
+    const existUser = await this.prismaService.user.findUnique({
+      where: {
+        login,
+      },
+    });
+
+    if (!existUser) {
+      throw new ForbiddenException('Credentials are not correct');
+    }
+
+    const isValidPassword = await bcrypt.compare(password, existUser.password);
+
+    if (!isValidPassword) {
+      throw new ForbiddenException('Credentials are not correct');
+    }
+
+    return this.createTokens(existUser);
   }
 
   private createTokens({ id, login, role }) {

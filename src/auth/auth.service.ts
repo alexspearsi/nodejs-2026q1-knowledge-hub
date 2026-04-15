@@ -2,14 +2,18 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { SignupRequestDto } from './dto/signup.dto';
+import { AuthRequestDto } from './dto/signup.dto';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import type { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { JwtPayload as AppJwtPayload } from './interfaces/jwt.interface';
+import {
+  JwtPayload as AppJwtPayload,
+  JwtPayload,
+} from './interfaces/jwt.interface';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +33,7 @@ export class AuthService {
     this.CRYPT_SALT = Number(this.configService.getOrThrow('CRYPT_SALT'));
   }
 
-  async signup(res: Response, dto: SignupRequestDto) {
+  async signup(res: Response, dto: AuthRequestDto) {
     const { login, password } = dto;
 
     const existUser = await this.prismaService.user.findUnique({
@@ -54,7 +58,7 @@ export class AuthService {
     return { message: 'User signed up' };
   }
 
-  async login(res: Response, dto: SignupRequestDto) {
+  async login(res: Response, dto: AuthRequestDto) {
     const { login, password } = dto;
 
     const existUser = await this.prismaService.user.findUnique({
@@ -95,5 +99,19 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async validate(payload: JwtPayload) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: payload.userId,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
 }

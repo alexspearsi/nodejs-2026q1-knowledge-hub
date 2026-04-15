@@ -23,9 +23,12 @@ import {
 } from '../common/decorators/article.decorator';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { JwtGuard } from '../auth/guards/auth.guard';
+import { UseGuards } from '@nestjs/common';
 
 @ApiTags('Articles')
 @Controller('article')
+@UseGuards(JwtGuard)
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 

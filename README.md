@@ -34,7 +34,15 @@ Wait until you see:
 app  | Application is running on: http://localhost:4000
 ```
 
-**4. Open in browser**
+**4. Seed the database**
+
+In a separate terminal, run to populate the database with sample data:
+
+```bash
+docker-compose exec app npx prisma db seed
+```
+
+**5. Open in browser**
 
 API http://localhost:4000
 Swagger docs http://localhost:4000/doc
@@ -76,7 +84,13 @@ Update `POSTGRES_HOST` to `localhost` and make sure PostgreSQL is running.
 npx prisma migrate deploy
 ```
 
-**4. Start the application**
+**4. Seed the database**
+
+```bash
+npx prisma db seed
+```
+
+**5. Start the application**
 
 ```bash
 # Development

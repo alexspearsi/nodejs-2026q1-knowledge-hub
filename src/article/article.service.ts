@@ -85,14 +85,16 @@ export class ArticleService {
     };
   }
 
-  async create(dto: CreateArticleDto) {
+  async create(dto: CreateArticleDto, currentUserId: string) {
+    const authorId = dto.authorId !== undefined ? dto.authorId : currentUserId;
+
     const article = await this.prismaService.article.create({
       data: {
         title: dto.title,
         content: dto.content,
         status: dto.status ?? ArticleStatus.DRAFT,
 
-        author: dto.authorId ? { connect: { id: dto.authorId } } : undefined,
+        author: authorId ? { connect: { id: authorId } } : undefined,
 
         category: dto.categoryId
           ? { connect: { id: dto.categoryId } }

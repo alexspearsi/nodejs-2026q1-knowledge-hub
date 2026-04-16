@@ -35,7 +35,7 @@ export class CommentService {
     return comments.map((c) => this.toResponse(c));
   }
 
-  async create(dto: CreateCommentDto) {
+  async create(dto: CreateCommentDto, currentUserId: string) {
     const article = await this.prismaService.article.findUnique({
       where: { id: dto.articleId },
     });
@@ -44,11 +44,13 @@ export class CommentService {
       throw new UnprocessableEntityException('Article with this id not found');
     }
 
+    const authorId = dto.authorId !== undefined ? dto.authorId : currentUserId;
+
     const comment = await this.prismaService.comment.create({
       data: {
         content: dto.content,
         article: { connect: { id: dto.articleId } },
-        author: dto.authorId ? { connect: { id: dto.authorId } } : undefined,
+        author: authorId ? { connect: { id: authorId } } : undefined,
       },
     });
 

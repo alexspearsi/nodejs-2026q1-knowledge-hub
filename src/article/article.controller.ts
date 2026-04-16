@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
@@ -24,7 +25,8 @@ import {
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { JwtGuard } from '../auth/guards/auth.guard';
-import { UseGuards } from '@nestjs/common';
+import { User } from '../user/user.interface';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiTags('Articles')
 @Controller('article')
@@ -49,8 +51,8 @@ export class ArticleController {
   @ApiCreateArticle()
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateArticleDto) {
-    return this.articleService.create(dto);
+  create(@Body() dto: CreateArticleDto, @CurrentUser() user: User) {
+    return this.articleService.create(dto, user.id);
   }
 
   @ApiUpdateArticle()

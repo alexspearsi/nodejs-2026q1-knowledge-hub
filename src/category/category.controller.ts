@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -23,9 +24,11 @@ import {
   ApiUpdateCategory,
 } from '../common/decorators/category.decorator';
 import { GetCategoriesQueryDto } from './dto/get-category-query.dto';
+import { JwtGuard } from '../auth/guards/auth.guard';
 
 @ApiTags('Category')
 @Controller('category')
+@UseGuards(JwtGuard)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 

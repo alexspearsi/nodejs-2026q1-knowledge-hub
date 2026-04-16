@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthRequestDto } from './dto/signup.dto';
@@ -19,6 +20,8 @@ import {
 export class AuthService {
   private readonly TOKEN_EXPIRE_TIME;
   private readonly TOKEN_REFRESH_EXPIRE_TIME;
+  private readonly JWT_SECRET_KEY;
+  private readonly JWT_SECRET_REFRESH_KEY;
   private readonly CRYPT_SALT;
 
   constructor(
@@ -29,6 +32,10 @@ export class AuthService {
     this.TOKEN_EXPIRE_TIME = this.configService.getOrThrow('TOKEN_EXPIRE_TIME');
     this.TOKEN_REFRESH_EXPIRE_TIME = this.configService.getOrThrow(
       'TOKEN_REFRESH_EXPIRE_TIME',
+    );
+    this.JWT_SECRET_KEY = this.configService.getOrThrow('JWT_SECRET_KEY');
+    this.JWT_SECRET_REFRESH_KEY = this.configService.getOrThrow(
+      'JWT_SECRET_REFRESH_KEY',
     );
     this.CRYPT_SALT = Number(this.configService.getOrThrow('CRYPT_SALT'));
   }
@@ -48,14 +55,14 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, this.CRYPT_SALT);
 
-    await this.prismaService.user.create({
+    const newUser = await this.prismaService.user.create({
       data: {
         login,
         password: hashedPassword,
       },
     });
 
-    return { message: 'User signed up' };
+    return { id: newUser.id, login: newUser.login };
   }
 
   async login(res: Response, dto: AuthRequestDto) {
@@ -88,10 +95,12 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload, {
+      secret: this.JWT_SECRET_KEY,
       expiresIn: this.TOKEN_EXPIRE_TIME,
     });
 
     const refreshToken = this.jwtService.sign(payload, {
+      secret: this.JWT_SECRET_REFRESH_KEY,
       expiresIn: this.TOKEN_REFRESH_EXPIRE_TIME,
     });
 
@@ -113,5 +122,25 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async refresh(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token is required');
+    }
+
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
+        secret: this.JWT_SECRET_REFRESH_KEY,
+      });
+
+      const user = await this.prismaService.user.findUnique({
+        where: { id: payload.userId },
+      });
+
+      return this.createTokens(user);
+    } catch {
+      throw new ForbiddenException('Invalid or expired refresh token');
+    }
   }
 }

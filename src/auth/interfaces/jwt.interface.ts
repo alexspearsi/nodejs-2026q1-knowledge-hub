@@ -1,8 +1,4 @@
-enum UserRole {
-  admin,
-  editor,
-  viewer,
-}
+import { UserRole } from '../../generated/prisma/enums';
 
 export interface JwtPayload {
   userId: string;

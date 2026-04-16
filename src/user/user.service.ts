@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -85,6 +86,14 @@ export class UserService {
   }
 
   async create(dto: CreateUserDto) {
+    const existing = await this.prismaService.user.findUnique({
+      where: { login: dto.login },
+    });
+
+    if (existing) {
+      throw new BadRequestException('Login already exists');
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const user = await this.prismaService.user.create({

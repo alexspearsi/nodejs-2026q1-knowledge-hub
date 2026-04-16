@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
@@ -23,9 +24,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { UserService } from './user.service';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { JwtGuard } from '../auth/guards/auth.guard';
 
 @ApiTags('User')
 @Controller('user')
+@UseGuards(JwtGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

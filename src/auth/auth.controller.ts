@@ -31,4 +31,10 @@ export class AuthController {
   ) {
     return await this.authService.login(res, dto);
   }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Body() body: { refreshToken: string }) {
+    return await this.authService.refresh(body.refreshToken);
+  }
 }

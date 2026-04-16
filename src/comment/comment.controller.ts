@@ -9,6 +9,7 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -20,9 +21,13 @@ import {
   ApiGetCommentById,
   ApiGetComments,
 } from '../common/decorators/comment.decorator';
+import { JwtGuard } from '../auth/guards/auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { User } from '../user/user.interface';
 
 @ApiTags('Comment')
 @Controller('comment')
+@UseGuards(JwtGuard)
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
@@ -41,8 +46,8 @@ export class CommentController {
   @ApiCreateComment()
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateCommentDto) {
-    return this.commentService.create(dto);
+  create(@Body() dto: CreateCommentDto, @CurrentUser() user: User) {
+    return this.commentService.create(dto, user.id);
   }
 
   @ApiDeleteComment()

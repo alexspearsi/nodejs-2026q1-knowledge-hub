@@ -9,7 +9,7 @@ import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { SortOrder } from '../common/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UserRole } from './dto/create-user.dto';
-import { UpdatePasswordDto } from './dto/update-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -118,7 +118,7 @@ export class UserService {
     };
   }
 
-  async update(id: string, dto: UpdatePasswordDto) {
+  async update(id: string, dto: UpdateUserDto) {
     const existing = await this.prismaService.user.findUnique({
       where: { id },
     });
@@ -127,17 +127,25 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const isValid = await bcrypt.compare(dto.oldPassword, existing.password);
+    const updateData: { password?: string; role?: typeof dto.role } = {};
 
-    if (!isValid) {
-      throw new ForbiddenException('Old password is incorrect');
+    if (dto.role !== undefined) {
+      updateData.role = dto.role;
     }
 
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    if (dto.oldPassword !== undefined && dto.newPassword !== undefined) {
+      const isValid = await bcrypt.compare(dto.oldPassword, existing.password);
+
+      if (!isValid) {
+        throw new ForbiddenException('Old password is incorrect');
+      }
+
+      updateData.password = await bcrypt.hash(dto.newPassword, 10);
+    }
 
     const user = await this.prismaService.user.update({
       where: { id },
-      data: { password: hashedPassword },
+      data: updateData,
       select: {
         id: true,
         login: true,

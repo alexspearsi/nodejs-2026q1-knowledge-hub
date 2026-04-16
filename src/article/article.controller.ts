@@ -25,12 +25,15 @@ import {
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { JwtGuard } from '../auth/guards/auth.guard';
-import { User } from '../user/user.interface';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { UserRole } from '../generated/prisma/enums';
+import { User } from '../user/user.interface';
 
 @ApiTags('Articles')
 @Controller('article')
-@UseGuards(JwtGuard)
+@UseGuards(JwtGuard, RolesGuard)
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
@@ -51,6 +54,7 @@ export class ArticleController {
   @ApiCreateArticle()
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @Roles(UserRole.editor, UserRole.admin)
   create(@Body() dto: CreateArticleDto, @CurrentUser() user: User) {
     return this.articleService.create(dto, user.id);
   }
@@ -58,16 +62,19 @@ export class ArticleController {
   @ApiUpdateArticle()
   @Put(':id')
   @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.editor, UserRole.admin)
   update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateArticleDto,
+    @CurrentUser() user: User,
   ) {
-    return this.articleService.update(id, dto);
+    return this.articleService.update(id, dto, user.id, user.role as UserRole);
   }
 
   @ApiDeleteArticle()
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(UserRole.admin)
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.articleService.remove(id);
   }

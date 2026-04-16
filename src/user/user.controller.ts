@@ -1,7 +1,9 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -21,14 +23,19 @@ import {
   ApiUpdateUserPassword,
 } from '../common/decorators/user.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { UserService } from './user.service';
-import { UpdatePasswordDto } from './dto/update-password.dto';
 import { JwtGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { UserRole } from '../generated/prisma/enums';
+import { User } from './user.interface';
 
 @ApiTags('User')
 @Controller('user')
-@UseGuards(JwtGuard)
+@UseGuards(JwtGuard, RolesGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -48,6 +55,7 @@ export class UserController {
   @ApiCreateUser()
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @Roles(UserRole.admin)
   create(@Body() dto: CreateUserDto) {
     return this.userService.create(dto);
   }
@@ -57,14 +65,27 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Body() dto: UpdatePasswordDto,
+    @Body() dto: UpdateUserDto,
+    @CurrentUser() currentUser: User,
   ) {
+    if (currentUser.role !== UserRole.admin && currentUser.id !== id) {
+      throw new ForbiddenException(
+        'You do not have permission to update this user',
+      );
+    }
+    if (dto.role && currentUser.role !== UserRole.admin) {
+      throw new ForbiddenException('Only admins can update user roles');
+    }
+    if (!dto.role && !dto.oldPassword && !dto.newPassword) {
+      throw new BadRequestException('At least one field must be provided');
+    }
     return this.userService.update(id, dto);
   }
 
   @ApiDeleteUser()
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(UserRole.admin)
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.userService.remove(id);
   }

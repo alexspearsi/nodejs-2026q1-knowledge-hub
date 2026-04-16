@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { UserRole } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthRequestDto } from './dto/signup.dto';
 import { ConfigService } from '@nestjs/config';
@@ -50,15 +51,26 @@ export class AuthService {
     });
 
     if (existUser) {
-      throw new BadRequestException('Login already exists');
+      const samePassword = await bcrypt.compare(password, existUser.password);
+
+      if (!samePassword) {
+        throw new BadRequestException('Login already exists');
+      }
+
+      return { id: existUser.id, login: existUser.login };
     }
 
     const hashedPassword = await bcrypt.hash(password, this.CRYPT_SALT);
+
+    const adminCount = await this.prismaService.user.count({
+      where: { role: UserRole.admin },
+    });
 
     const newUser = await this.prismaService.user.create({
       data: {
         login,
         password: hashedPassword,
+        role: adminCount === 0 ? UserRole.admin : UserRole.viewer,
       },
     });
 

@@ -10,10 +10,17 @@ import { SortOrder } from '../common/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UserRole } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prismaService: PrismaService) {}
+  private readonly CRYPT_SALT: number;
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.CRYPT_SALT = Number(this.configService.getOrThrow('CRYPT_SALT'));
+  }
 
   async findAll(query?: GetUsersQueryDto) {
     let users = (
@@ -94,7 +101,7 @@ export class UserService {
       throw new BadRequestException('Login already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash(dto.password, this.CRYPT_SALT);
 
     const user = await this.prismaService.user.create({
       data: {
@@ -140,7 +147,7 @@ export class UserService {
         throw new ForbiddenException('Old password is incorrect');
       }
 
-      updateData.password = await bcrypt.hash(dto.newPassword, 10);
+      updateData.password = await bcrypt.hash(dto.newPassword, this.CRYPT_SALT);
     }
 
     const user = await this.prismaService.user.update({

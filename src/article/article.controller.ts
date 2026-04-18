@@ -68,7 +68,7 @@ export class ArticleController {
     @Body() dto: UpdateArticleDto,
     @CurrentUser() user: User,
   ) {
-    return this.articleService.update(id, dto, user.id, user.role as UserRole);
+    return this.articleService.update(id, dto, user.id, user.role);
   }
 
   @ApiDeleteArticle()

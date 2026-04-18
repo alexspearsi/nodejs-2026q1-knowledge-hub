@@ -41,6 +41,16 @@ export class CreateArticleDto {
   status?: ArticleStatus;
 
   @ApiProperty({
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'UUID of the author (user) of this article',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsUUID('4')
+  authorId?: string | null;
+
+  @ApiProperty({
     example: '550e8400-e29b-41d4-a716-446655440001',
     description: 'UUID of the category this article belongs to',
     required: false,
@@ -48,16 +58,6 @@ export class CreateArticleDto {
   @IsOptional()
   @IsUUID('4')
   categoryId?: string;
-
-  @ApiProperty({
-    example: '550e8400-e29b-41d4-a716-446655440000',
-    description: 'UUID of the author. Pass null for anonymous.',
-    required: false,
-    nullable: true,
-  })
-  @IsOptional()
-  @IsUUID('4')
-  authorId?: string | null;
 
   @ApiProperty({
     example: ['nestjs', 'backend'],

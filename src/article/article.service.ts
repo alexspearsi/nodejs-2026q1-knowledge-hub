@@ -83,7 +83,6 @@ export class ArticleService {
 
     return {
       ...article,
-
       tags: article.tags?.map((tag) => tag.name) ?? [],
       createdAt: article.createdAt.getTime(),
       updatedAt: article.updatedAt.getTime(),
@@ -91,7 +90,8 @@ export class ArticleService {
   }
 
   async create(dto: CreateArticleDto, currentUserId: string) {
-    const authorId = dto.authorId !== undefined ? dto.authorId : currentUserId;
+    const resolvedAuthorId =
+      dto.authorId === undefined ? currentUserId : dto.authorId;
 
     const article = await this.prismaService.article.create({
       data: {
@@ -99,7 +99,9 @@ export class ArticleService {
         content: dto.content,
         status: dto.status ?? ArticleStatus.DRAFT,
 
-        author: authorId ? { connect: { id: authorId } } : undefined,
+        author: resolvedAuthorId
+          ? { connect: { id: resolvedAuthorId } }
+          : undefined,
 
         category: dto.categoryId
           ? { connect: { id: dto.categoryId } }

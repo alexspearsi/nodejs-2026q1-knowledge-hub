@@ -49,8 +49,6 @@ services:
     restart: unless-stopped
     networks:
       - hub-network
-    profiles:
-      - debug
 
 networks:
   hub-network:

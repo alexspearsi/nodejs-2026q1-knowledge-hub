@@ -76,7 +76,6 @@ export function ApiCreateArticle() {
             title: 'NestJs Guide',
             content: 'Full guide...',
             status: 'published',
-            authorId: '550e8400-e29b-41d4-a716-446655440000',
             categoryId: '550e8400-e29b-41d4-a716-446655440001',
             tags: ['nestjs', 'backend'],
           },

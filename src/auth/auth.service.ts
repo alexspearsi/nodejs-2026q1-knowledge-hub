@@ -96,7 +96,11 @@ export class AuthService {
       throw new ForbiddenException('Credentials are not correct');
     }
 
-    return this.createTokens(existUser);
+    const tokens = await this.createTokens(existUser);
+
+    await this.saveRefreshTokenHash(existUser.id, tokens.refreshToken);
+
+    return tokens;
   }
 
   private createTokens({ id, login, role }) {
@@ -122,6 +126,19 @@ export class AuthService {
     };
   }
 
+  private async saveRefreshTokenHash(userId: string, refreshToken: string) {
+    const hash = await bcrypt.hash(refreshToken, this.CRYPT_SALT);
+
+    await this.prismaService.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshTokenHash: hash,
+      },
+    });
+  }
+
   async validate(payload: JwtPayload) {
     const user = await this.prismaService.user.findUnique({
       where: {
@@ -141,18 +158,47 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token is required');
     }
 
+    let payload: JwtPayload;
+
     try {
-      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
+      payload = this.jwtService.verify<JwtPayload>(refreshToken, {
         secret: this.JWT_SECRET_REFRESH_KEY,
       });
-
-      const user = await this.prismaService.user.findUnique({
-        where: { id: payload.userId },
-      });
-
-      return this.createTokens(user);
     } catch {
       throw new ForbiddenException('Invalid or expired refresh token');
     }
+
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: payload.userId,
+      },
+    });
+
+    if (!user || !user.refreshTokenHash) {
+      throw new ForbiddenException('Invalid or expired refresh token');
+    }
+
+    const tokenMatches = await bcrypt.compare(
+      refreshToken,
+      user.refreshTokenHash,
+    );
+    if (!tokenMatches) {
+      throw new ForbiddenException('Invalid or expired refresh token');
+    }
+
+    const tokens = await this.createTokens(user);
+
+    await this.saveRefreshTokenHash(user.id, tokens.refreshToken);
+
+    return tokens;
+  }
+
+  async logout(userId: string) {
+    await this.prismaService.user.updateMany({
+      where: { id: userId, refreshTokenHash: { not: null } },
+      data: { refreshTokenHash: null },
+    });
+
+    return { message: 'Logged out successfully' };
   }
 }

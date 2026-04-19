@@ -24,6 +24,7 @@ model User {
   login String @unique
   password String
   role UserRole @default(viewer)
+  refreshTokenHash String? @map("refresh_token_hash")
 
   articles Article[]
   comments Comment[]

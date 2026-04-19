@@ -5,10 +5,13 @@ import {
   HttpStatus,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthRequestDto } from './dto/signup.dto';
 import { Response } from 'express';
+import { JwtGuard } from './guards/auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -30,6 +33,13 @@ export class AuthController {
     @Body() dto: AuthRequestDto,
   ) {
     return await this.authService.login(res, dto);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtGuard)
+  @HttpCode(HttpStatus.OK)
+  async logout(@CurrentUser() user: { id: string }) {
+    return await this.authService.logout(user.id);
   }
 
   @Post('refresh')

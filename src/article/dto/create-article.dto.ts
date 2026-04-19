@@ -42,12 +42,13 @@ export class CreateArticleDto {
 
   @ApiProperty({
     example: '550e8400-e29b-41d4-a716-446655440000',
-    description: 'UUID of the article author',
+    description: 'UUID of the author (user) of this article',
     required: false,
+    nullable: true,
   })
   @IsOptional()
   @IsUUID('4')
-  authorId?: string;
+  authorId?: string | null;
 
   @ApiProperty({
     example: '550e8400-e29b-41d4-a716-446655440001',

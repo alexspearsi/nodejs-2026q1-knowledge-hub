@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import * as bcrypt from 'bcrypt';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
 
@@ -17,10 +18,12 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.tag.deleteMany();
 
+  const cryptSalt = Number(process.env.CRYPT_SALT ?? 10);
+
   const admin = await prisma.user.create({
     data: {
       login: 'admin',
-      password: 'admin123',
+      password: await bcrypt.hash('admin123', cryptSalt),
       role: 'admin',
     },
   });

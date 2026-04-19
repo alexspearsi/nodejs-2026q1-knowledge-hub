@@ -18,11 +18,12 @@ export class CreateCommentDto {
   articleId: string;
 
   @ApiProperty({
-    example: '550e8400-e29b-41d4-a716-446655440001',
-    description: 'UUID of the comment author',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'UUID of the comment author. Pass null for anonymous.',
     required: false,
+    nullable: true,
   })
   @IsOptional()
   @IsUUID('4')
-  authorId?: string;
+  authorId?: string | null;
 }

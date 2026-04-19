@@ -1,8 +1,10 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { UserRole } from '../generated/prisma/enums';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { GetCommentsQueryDto } from './dto/get-comments-query';
 import { PrismaService } from '../prisma/prisma.service';
@@ -35,7 +37,7 @@ export class CommentService {
     return comments.map((c) => this.toResponse(c));
   }
 
-  async create(dto: CreateCommentDto) {
+  async create(dto: CreateCommentDto, currentUserId: string) {
     const article = await this.prismaService.article.findUnique({
       where: { id: dto.articleId },
     });
@@ -44,11 +46,13 @@ export class CommentService {
       throw new UnprocessableEntityException('Article with this id not found');
     }
 
+    const authorId = dto.authorId !== undefined ? dto.authorId : currentUserId;
+
     const comment = await this.prismaService.comment.create({
       data: {
         content: dto.content,
         article: { connect: { id: dto.articleId } },
-        author: dto.authorId ? { connect: { id: dto.authorId } } : undefined,
+        author: authorId ? { connect: { id: authorId } } : undefined,
       },
     });
 
@@ -67,13 +71,22 @@ export class CommentService {
     return this.toResponse(comment);
   }
 
-  async remove(id: string) {
+  async remove(id: string, currentUserId: string, currentUserRole: UserRole) {
     const comment = await this.prismaService.comment.findUnique({
       where: { id },
     });
 
     if (!comment) {
       throw new NotFoundException('Comment not found');
+    }
+
+    if (
+      currentUserRole !== UserRole.admin &&
+      comment.authorId !== currentUserId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this comment',
+      );
     }
 
     await this.prismaService.comment.delete({ where: { id } });

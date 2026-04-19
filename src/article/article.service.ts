@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { SortOrder } from '../common/types';
 import { CreateArticleDto, ArticleStatus } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { UserRole } from '../generated/prisma/enums';
 
 @Injectable()
 export class ArticleService {
@@ -78,21 +83,25 @@ export class ArticleService {
 
     return {
       ...article,
-
       tags: article.tags?.map((tag) => tag.name) ?? [],
       createdAt: article.createdAt.getTime(),
       updatedAt: article.updatedAt.getTime(),
     };
   }
 
-  async create(dto: CreateArticleDto) {
+  async create(dto: CreateArticleDto, currentUserId: string) {
+    const resolvedAuthorId =
+      dto.authorId === undefined ? currentUserId : dto.authorId;
+
     const article = await this.prismaService.article.create({
       data: {
         title: dto.title,
         content: dto.content,
         status: dto.status ?? ArticleStatus.DRAFT,
 
-        author: dto.authorId ? { connect: { id: dto.authorId } } : undefined,
+        author: resolvedAuthorId
+          ? { connect: { id: resolvedAuthorId } }
+          : undefined,
 
         category: dto.categoryId
           ? { connect: { id: dto.categoryId } }
@@ -123,8 +132,22 @@ export class ArticleService {
     };
   }
 
-  async update(id: string, dto: UpdateArticleDto) {
-    await this.findById(id);
+  async update(
+    id: string,
+    dto: UpdateArticleDto,
+    currentUserId: string,
+    currentUserRole: UserRole,
+  ) {
+    const existing = await this.findById(id);
+
+    if (
+      currentUserRole !== UserRole.admin &&
+      existing.authorId !== currentUserId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to update this article',
+      );
+    }
 
     const article = await this.prismaService.article.update({
       where: { id },

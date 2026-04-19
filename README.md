@@ -34,7 +34,25 @@ Wait until you see:
 app  | Application is running on: http://localhost:4000
 ```
 
-**4. Open in browser**
+**4. Running tests**
+
+After starting the application with `docker-compose up --build`, run the tests in a separate terminal:
+
+```bash
+npm run test:auth
+npm run test:refresh
+npm run test:rbac
+```
+
+**Seed the database (optional)**
+
+In a separate terminal, run to populate the database with sample data:
+
+```bash
+docker-compose exec app npx prisma db seed
+```
+
+**5. Open in browser**
 
 API http://localhost:4000
 Swagger docs http://localhost:4000/doc
@@ -76,7 +94,13 @@ Update `POSTGRES_HOST` to `localhost` and make sure PostgreSQL is running.
 npx prisma migrate deploy
 ```
 
-**4. Start the application**
+**4. Seed the database**
+
+```bash
+npx prisma db seed
+```
+
+**5. Start the application**
 
 ```bash
 # Development
@@ -119,6 +143,10 @@ Migrations run automatically on each container start. If something went wrong:
 ```bash
 docker-compose exec app npx prisma migrate deploy
 ```
+
+**Tests are failing**
+
+Open Adminer at http://localhost:8081, log in, and manually delete all generated data from the tables, then re-run the tests.
 
 **Want to reset the database completely**
 

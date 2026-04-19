@@ -12,6 +12,7 @@ import { AuthRequestDto } from './dto/signup.dto';
 import { Response } from 'express';
 import { JwtGuard } from './guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -19,6 +20,7 @@ export class AuthController {
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(ThrottlerGuard)
   async signup(
     @Res({ passthrough: true }) res: Response,
     @Body() dto: AuthRequestDto,
@@ -28,6 +30,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
   async signin(
     @Res({ passthrough: true }) res: Response,
     @Body() dto: AuthRequestDto,

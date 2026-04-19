@@ -7,12 +7,23 @@ import { CategoryModule } from './category/category.module';
 import { CommentModule } from './comment/comment.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          name: 'auth',
+          ttl: config.get<number>('THROTTLE_TTL', 60000),
+          limit: config.get<number>('THROTTLE_LIMIT', 10),
+        },
+      ],
     }),
     UserModule,
     ArticleModule,

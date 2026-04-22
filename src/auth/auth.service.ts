@@ -16,6 +16,7 @@ import {
   JwtPayload as AppJwtPayload,
   JwtPayload,
 } from './interfaces/jwt.interface';
+import { CustomLogger } from '../common/logger/logger.service';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +30,7 @@ export class AuthService {
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly logger: CustomLogger,
   ) {
     this.TOKEN_EXPIRE_TIME = this.configService.getOrThrow('TOKEN_EXPIRE_TIME');
     this.TOKEN_REFRESH_EXPIRE_TIME = this.configService.getOrThrow(

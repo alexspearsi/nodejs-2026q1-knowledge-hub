@@ -20,6 +20,25 @@ async function bootstrap() {
   const logger = app.get(CustomLogger);
   app.useLogger(logger);
 
+  process.on('uncaughtException', async (error: Error) => {
+    logger.error(error.message, error.stack, 'uncaughtException');
+
+    await app.close();
+
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', async (reason: unknown) => {
+    const message = reason instanceof Error ? reason.message : String(reason);
+    const stack = reason instanceof Error ? reason.stack : undefined;
+
+    logger.error(message, stack, 'unhandledRejection');
+
+    await app.close();
+
+    process.exit(1);
+  });
+
   app.useGlobalFilters(new AllExceptionsFilter(logger));
 
   app.useGlobalPipes(

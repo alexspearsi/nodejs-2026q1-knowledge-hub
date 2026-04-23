@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { CustomLogger } from '../logger/logger.service';
+import { AppError } from '../errors/app.error';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -21,11 +22,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let error = 'Internal Server Error';
     let message = 'An unexpected error occurred';
 
-    if (exception instanceof HttpException) {
+    if (exception instanceof AppError) {
+      statusCode = exception.statusCode;
+      message = exception.message;
+      error = exception.title;
+    } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
 
       const res = exception.getResponse();
-
       const body =
         typeof res === 'string'
           ? { message: res, error: undefined }

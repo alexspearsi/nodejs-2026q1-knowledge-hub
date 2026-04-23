@@ -10,6 +10,7 @@ import { ArticleModule } from './article/article.module';
 import { CustomLogger } from './common/logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { AllExceptionsFilter } from './common/filters/all-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -18,6 +19,8 @@ async function bootstrap() {
 
   const logger = app.get(CustomLogger);
   app.useLogger(logger);
+
+  app.useGlobalFilters(new AllExceptionsFilter(logger));
 
   app.useGlobalPipes(
     new ValidationPipe({

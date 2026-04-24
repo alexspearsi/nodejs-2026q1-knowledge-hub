@@ -1,9 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../common/errors/app.error';
 import * as bcrypt from 'bcrypt';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { SortOrder } from '../common/types';
@@ -82,7 +82,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundError('User not found');
     }
 
     return {
@@ -98,7 +98,7 @@ export class UserService {
     });
 
     if (existing) {
-      throw new BadRequestException('Login already exists');
+      throw new ValidationError('Login already exists');
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, this.CRYPT_SALT);
@@ -131,7 +131,7 @@ export class UserService {
     });
 
     if (!existing) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundError('User not found');
     }
 
     const updateData: { password?: string; role?: typeof dto.role } = {};
@@ -144,7 +144,7 @@ export class UserService {
       const isValid = await bcrypt.compare(dto.oldPassword, existing.password);
 
       if (!isValid) {
-        throw new ForbiddenException('Old password is incorrect');
+        throw new ForbiddenError('Old password is incorrect');
       }
 
       updateData.password = await bcrypt.hash(dto.newPassword, this.CRYPT_SALT);

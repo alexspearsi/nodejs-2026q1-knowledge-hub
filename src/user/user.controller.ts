@@ -1,9 +1,7 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -26,6 +24,10 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { UserService } from './user.service';
+import {
+  ForbiddenError,
+  ValidationError,
+} from '../common/errors/app.error';
 import { JwtGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -69,15 +71,15 @@ export class UserController {
     @CurrentUser() currentUser: User,
   ) {
     if (currentUser.role !== UserRole.admin && currentUser.id !== id) {
-      throw new ForbiddenException(
+      throw new ForbiddenError(
         'You do not have permission to update this user',
       );
     }
     if (dto.role && currentUser.role !== UserRole.admin) {
-      throw new ForbiddenException('Only admins can update user roles');
+      throw new ForbiddenError('Only admins can update user roles');
     }
     if (!dto.role && !dto.oldPassword && !dto.newPassword) {
-      throw new BadRequestException('At least one field must be provided');
+      throw new ValidationError('At least one field must be provided');
     }
     return this.userService.update(id, dto);
   }

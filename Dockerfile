@@ -23,7 +23,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --omit=dev
+RUN npm pkg delete scripts.prepare && npm ci --omit=dev
 
 COPY prisma.config.ts ./
 COPY prisma ./prisma

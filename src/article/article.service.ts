@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  ForbiddenError,
-  NotFoundError,
-} from '../common/errors/app.error';
+import { ForbiddenError, NotFoundError } from '../common/errors/app.error';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { SortOrder } from '../common/types';
 import { CreateArticleDto, ArticleStatus } from './dto/create-article.dto';

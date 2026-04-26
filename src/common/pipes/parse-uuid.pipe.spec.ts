@@ -45,4 +45,10 @@ describe('ParseUuidPipe', () => {
       `"${INVALID_UUID}" is not a valid UUID`,
     );
   });
+
+  it('should throw ValidationError for UUID with wrong variant byte', () => {
+    expect(() =>
+      pipe.transform('550e8400-e29b-4000-0416-446655440000'),
+    ).toThrow(ValidationError);
+  });
 });

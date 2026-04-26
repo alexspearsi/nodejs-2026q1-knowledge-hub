@@ -1,6 +1,7 @@
 import { CreateUserDto, UserRole } from './dto/create-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { User } from './user.interface';
+import { SortOrder } from '../common/types';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -83,6 +84,8 @@ describe('User Service', () => {
     db.user.findUnique.mockResolvedValue(userDB[0]);
     db.user.create.mockResolvedValue(userWithoutPassword);
     db.user.update.mockResolvedValue(userWithoutPassword);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    vi.mocked(bcrypt.hash).mockResolvedValue('hashed_password' as never);
 
     const module = await Test.createTestingModule({
       providers: [
@@ -119,6 +122,27 @@ describe('User Service', () => {
         updatedAt: expect.any(Number),
       });
     });
+  });
+
+  it('should sort users by login ASC when sortBy is provided', async () => {
+    const query = Object.assign(new GetUsersQueryDto(), {
+      sortBy: 'login',
+      order: SortOrder.ASC,
+    });
+
+    const result = await service.findAll(query);
+    const list = Array.isArray(result) ? result : result.data;
+
+    expect(list[0].login).toBe('admin_user');
+  });
+
+  it('should return paginated result when page and limit are provided', async () => {
+    const query = Object.assign(new GetUsersQueryDto(), { page: 1, limit: 2 });
+
+    const result = await service.findAll(query);
+
+    expect(result).toMatchObject({ total: 3, page: 1, limit: 2 });
+    expect((result as any).data).toHaveLength(2);
   });
 
   describe('findById', () => {
@@ -224,6 +248,57 @@ describe('User Service', () => {
           newPassword: 'wrong_password',
         }),
       ).rejects.toThrow(ForbiddenError);
+    });
+
+    it('should update role when dto.role is provided', async () => {
+      await service.update(userId, { role: UserRole.EDITOR });
+
+      expect(db.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ role: UserRole.EDITOR }),
+        }),
+      );
+    });
+
+    it('should hash new password and update when oldPassword and newPassword are correct', async () => {
+      await service.update(userId, {
+        oldPassword: 'current_password',
+        newPassword: 'new_password',
+      });
+
+      expect(bcrypt.hash).toHaveBeenCalledWith('new_password', CRYPT_SALT);
+      expect(db.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ password: 'hashed_password' }),
+        }),
+      );
+    });
+  });
+
+  describe('remove', () => {
+    it('should throw NotFoundError when user does not exist', async () => {
+      db.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove('non-existent')).rejects.toThrow(
+        NotFoundError,
+      );
+    });
+
+    it('should delete user and nullify article authors in a transaction', async () => {
+      const txArticle = { updateMany: vi.fn().mockResolvedValue({ count: 1 }) };
+      const txComment = { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) };
+      const txUser = { delete: vi.fn().mockResolvedValue(userDB[0]) };
+
+      db.$transaction.mockImplementation(async (cb: any) =>
+        cb({ article: txArticle, comment: txComment, user: txUser }),
+      );
+
+      await service.remove(userId);
+
+      expect(txArticle.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { authorId: userId } }),
+      );
+      expect(txUser.delete).toHaveBeenCalledWith({ where: { id: userId } });
     });
   });
 });

@@ -230,6 +230,17 @@ describe('AuthService', () => {
       );
     });
 
+    it('should throw ForbiddenError when user has no refresh token hash', async () => {
+      db.user.findUnique.mockResolvedValue({
+        ...userDB,
+        refreshTokenHash: null,
+      });
+
+      await expect(service.refresh('valid_token')).rejects.toThrow(
+        ForbiddenError,
+      );
+    });
+
     it('should return new token on success', async () => {
       const result = await service.refresh('valid_token');
 

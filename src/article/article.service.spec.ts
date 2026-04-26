@@ -6,6 +6,7 @@ import { Test } from '@nestjs/testing';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { ForbiddenError, NotFoundError } from '../common/errors/app.error';
 import { UserRole } from '../generated/prisma/enums';
+import { SortOrder } from '../common/types';
 
 const articleId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 const userId = 'c1a7f6b2-5e3d-4a9c-9f2a-8d7b1c0e6f45';
@@ -119,6 +120,36 @@ describe('Article Service', () => {
           where: expect.objectContaining({ authorId: userId }),
         }),
       );
+    });
+
+    it('should sort articles by title ASC when sortBy is provided', async () => {
+      const second = { ...articleDB, id: 'other-id', title: 'Zebra Article' };
+      db.article.findMany.mockResolvedValue([second, articleDB]);
+
+      const query = Object.assign(new GetArticlesQueryDto(), {
+        sortBy: 'title',
+        order: SortOrder.ASC,
+      });
+
+      const result = await service.findAll(query);
+      const list = Array.isArray(result) ? result : result.data;
+
+      expect(list[0].title).toBe('Test Article');
+    });
+
+    it('should return paginated result when page and limit are provided', async () => {
+      const second = { ...articleDB, id: 'other-id', title: 'Second Article' };
+      db.article.findMany.mockResolvedValue([articleDB, second]);
+
+      const query = Object.assign(new GetArticlesQueryDto(), {
+        page: 1,
+        limit: 1,
+      });
+
+      const result = await service.findAll(query);
+
+      expect(result).toMatchObject({ total: 2, page: 1, limit: 1 });
+      expect((result as any).data).toHaveLength(1);
     });
   });
 
@@ -269,6 +300,51 @@ describe('Article Service', () => {
             UserRole.admin,
           ),
         ).rejects.toThrow(NotFoundError);
+      });
+
+      it('should disconnect category when categoryId is not provided', async () => {
+        await service.update(
+          articleId,
+          { title: 'Updated' },
+          userId,
+          UserRole.admin,
+        );
+
+        expect(db.article.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              category: { disconnect: true },
+            }),
+          }),
+        );
+      });
+    });
+  });
+
+  describe('remove', () => {
+    it('should throw NotFoundError when article does not exist', async () => {
+      db.article.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove('non-existent')).rejects.toThrow(
+        NotFoundError,
+      );
+    });
+
+    it('should delete comments and article in a transaction', async () => {
+      const txComment = { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) };
+      const txArticle = { delete: vi.fn().mockResolvedValue(articleDB) };
+
+      db.$transaction.mockImplementation(async (cb: any) =>
+        cb({ comment: txComment, article: txArticle }),
+      );
+
+      await service.remove(articleId);
+
+      expect(txComment.deleteMany).toHaveBeenCalledWith({
+        where: { articleId },
+      });
+      expect(txArticle.delete).toHaveBeenCalledWith({
+        where: { id: articleId },
       });
     });
   });

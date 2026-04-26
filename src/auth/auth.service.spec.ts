@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { CustomLogger } from '../common/logger/logger.service';
 import { RolesGuard } from './guards/roles.guard';
+import { JwtStrategy } from './strategies/jwt.strategy';
 import { Reflector } from '@nestjs/core';
 import { UserRole } from '../generated/prisma/enums';
 
@@ -329,6 +330,52 @@ describe('AuthService', () => {
       expect(() => guard.canActivate(makeContext(UserRole.viewer))).toThrow(
         ForbiddenError,
       );
+    });
+  });
+
+  describe('JwtStrategy', () => {
+    let strategy: JwtStrategy;
+
+    const authServiceMock = {
+      validate: vi.fn(),
+    };
+
+    beforeEach(async () => {
+      vi.clearAllMocks();
+
+      authServiceMock.validate.mockResolvedValue(userDB);
+
+      const module = await Test.createTestingModule({
+        providers: [
+          JwtStrategy,
+          { provide: AuthService, useValue: authServiceMock },
+          { provide: ConfigService, useValue: configServiceMock },
+        ],
+      }).compile();
+
+      strategy = module.get<JwtStrategy>(JwtStrategy);
+    });
+
+    const payload = { userId, login: userDB.login, role: UserRole.viewer };
+
+    it('should return user when payload is valid', async () => {
+      const result = await strategy.validate(payload);
+
+      expect(result).toEqual(userDB);
+    });
+
+    it('should delegate to authService.validate with the payload', async () => {
+      await strategy.validate(payload);
+
+      expect(authServiceMock.validate).toHaveBeenCalledWith(payload);
+    });
+
+    it('should throw NotFoundError when user does not exist', async () => {
+      authServiceMock.validate.mockRejectedValue(
+        new NotFoundError('User not found'),
+      );
+
+      await expect(strategy.validate(payload)).rejects.toThrow(NotFoundError);
     });
   });
 });

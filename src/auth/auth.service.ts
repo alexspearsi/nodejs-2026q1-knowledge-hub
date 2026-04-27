@@ -1,10 +1,10 @@
+import { Injectable } from '@nestjs/common';
 import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from '../common/errors/app.error';
 import { UserRole } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthRequestDto } from './dto/signup.dto';
@@ -16,6 +16,7 @@ import {
   JwtPayload as AppJwtPayload,
   JwtPayload,
 } from './interfaces/jwt.interface';
+import { CustomLogger } from '../common/logger/logger.service';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +30,7 @@ export class AuthService {
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly logger: CustomLogger,
   ) {
     this.TOKEN_EXPIRE_TIME = this.configService.getOrThrow('TOKEN_EXPIRE_TIME');
     this.TOKEN_REFRESH_EXPIRE_TIME = this.configService.getOrThrow(
@@ -54,7 +56,7 @@ export class AuthService {
       const samePassword = await bcrypt.compare(password, existUser.password);
 
       if (!samePassword) {
-        throw new BadRequestException('Login already exists');
+        throw new ValidationError('Login already exists');
       }
 
       return { id: existUser.id, login: existUser.login };
@@ -87,13 +89,13 @@ export class AuthService {
     });
 
     if (!existUser) {
-      throw new ForbiddenException('Credentials are not correct');
+      throw new ForbiddenError('Credentials are not correct');
     }
 
     const isValidPassword = await bcrypt.compare(password, existUser.password);
 
     if (!isValidPassword) {
-      throw new ForbiddenException('Credentials are not correct');
+      throw new ForbiddenError('Credentials are not correct');
     }
 
     const tokens = await this.createTokens(existUser);
@@ -147,7 +149,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundError('User not found');
     }
 
     return user;
@@ -155,7 +157,7 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token is required');
+      throw new UnauthorizedError('Refresh token is required');
     }
 
     let payload: JwtPayload;
@@ -165,7 +167,7 @@ export class AuthService {
         secret: this.JWT_SECRET_REFRESH_KEY,
       });
     } catch {
-      throw new ForbiddenException('Invalid or expired refresh token');
+      throw new ForbiddenError('Invalid or expired refresh token');
     }
 
     const user = await this.prismaService.user.findUnique({
@@ -175,7 +177,7 @@ export class AuthService {
     });
 
     if (!user || !user.refreshTokenHash) {
-      throw new ForbiddenException('Invalid or expired refresh token');
+      throw new ForbiddenError('Invalid or expired refresh token');
     }
 
     const tokenMatches = await bcrypt.compare(
@@ -183,7 +185,7 @@ export class AuthService {
       user.refreshTokenHash,
     );
     if (!tokenMatches) {
-      throw new ForbiddenException('Invalid or expired refresh token');
+      throw new ForbiddenError('Invalid or expired refresh token');
     }
 
     const tokens = await this.createTokens(user);

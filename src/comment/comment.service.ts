@@ -1,9 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+  ForbiddenError,
+  NotFoundError,
+  UnprocessableEntityError,
+} from '../common/errors/app.error';
 import { UserRole } from '../generated/prisma/enums';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { GetCommentsQueryDto } from './dto/get-comments-query';
@@ -43,7 +43,7 @@ export class CommentService {
     });
 
     if (!article) {
-      throw new UnprocessableEntityException('Article with this id not found');
+      throw new UnprocessableEntityError('Article with this id not found');
     }
 
     const authorId = dto.authorId !== undefined ? dto.authorId : currentUserId;
@@ -65,7 +65,7 @@ export class CommentService {
     });
 
     if (!comment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundError('Comment not found');
     }
 
     return this.toResponse(comment);
@@ -77,14 +77,14 @@ export class CommentService {
     });
 
     if (!comment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundError('Comment not found');
     }
 
     if (
       currentUserRole !== UserRole.admin &&
       comment.authorId !== currentUserId
     ) {
-      throw new ForbiddenException(
+      throw new ForbiddenError(
         'You do not have permission to delete this comment',
       );
     }

@@ -23,7 +23,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --omit=dev
+RUN npm pkg delete scripts.prepare && npm ci --omit=dev
 
 COPY prisma.config.ts ./
 COPY prisma ./prisma
@@ -32,6 +32,9 @@ RUN npx prisma generate
 COPY --from=build /app/dist ./dist
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+RUN mkdir -p /app/logs && chown -R appuser:appgroup /app/logs
+
 USER appuser
 
 EXPOSE 4000

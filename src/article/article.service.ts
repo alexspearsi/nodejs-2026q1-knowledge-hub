@@ -1,9 +1,6 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ForbiddenError, NotFoundError } from '../common/errors/app.error';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
 import { SortOrder } from '../common/types';
 import { CreateArticleDto, ArticleStatus } from './dto/create-article.dto';
@@ -78,7 +75,7 @@ export class ArticleService {
     });
 
     if (!article) {
-      throw new NotFoundException('Article not found');
+      throw new NotFoundError('Article not found');
     }
 
     return {
@@ -144,7 +141,7 @@ export class ArticleService {
       currentUserRole !== UserRole.admin &&
       existing.authorId !== currentUserId
     ) {
-      throw new ForbiddenException(
+      throw new ForbiddenError(
         'You do not have permission to update this article',
       );
     }

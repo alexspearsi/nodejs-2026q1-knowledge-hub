@@ -28,9 +28,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": [
+    "src/**/*.ts": [
       "prettier --write",
-      "eslint --fix --cache"
+      "eslint --fix"
     ]
   },
   "prisma": {

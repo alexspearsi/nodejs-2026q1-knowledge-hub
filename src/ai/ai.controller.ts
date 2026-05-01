@@ -18,7 +18,9 @@ export class AiController {
 
   @Get('test')
   async test() {
-    const result = await this.aiService.generateContent('who am I?');
+    const result = await this.aiService.generateContent(
+      'who am I? in 2 sentences',
+    );
     return { result };
   }
 

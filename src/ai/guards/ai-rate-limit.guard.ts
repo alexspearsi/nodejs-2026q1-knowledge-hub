@@ -19,7 +19,7 @@ export class AIRateLimitGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
     const res = context.switchToHttp().getResponse();
-    const key: string = req.ip ?? 'globalc';
+    const key: string = req.ip ?? 'global';
     const now = Date.now();
     const windowMs = 60000;
 

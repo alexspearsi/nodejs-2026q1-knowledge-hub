@@ -1,16 +1,7 @@
-import { IsArray, IsEnum, IsOptional } from 'class-validator';
-
-export enum AnalysisAspect {
-  Sentiment = 'sentiment',
-  Topics = 'topics',
-  Keywords = 'keywords',
-  Readability = 'readability',
-  Summary = 'summary',
-}
+import { IsOptional, IsString } from 'class-validator';
 
 export class AnalyzeArticleDto {
+  @IsString()
   @IsOptional()
-  @IsArray()
-  @IsEnum(AnalysisAspect, { each: true })
-  aspects?: AnalysisAspect[];
+  task?: 'review' | 'bugs' | 'optimize' | 'explain';
 }

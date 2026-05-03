@@ -16,9 +16,12 @@ import { AIUsageService } from './ai-usage.service';
 import { TranslateArticleDto } from './dto/translate-article.dto';
 import { buildTranslatePrompt } from './prompts/translate.prompt';
 import { TranslateArticleResponse } from './dto/translate-article-response.dto';
+import { AnalyzeArticleDto } from './dto/analyze-article.dto';
+import { buildAnalyzePrompt } from './prompts/analyze.prompt';
+import { AnalyzeArticleResponseDto } from './dto/analyze-article-response.dto';
 
 @Injectable()
-export class AiService {
+export class AIService {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly model: string;
@@ -125,6 +128,44 @@ export class AiService {
       articleId,
       translatedText,
       detectedLanguage,
+    };
+
+    this.cacheService.set(cacheKey, response);
+
+    return response;
+  }
+
+  async analyze(articleId: string, dto: AnalyzeArticleDto) {
+    const article = await this.prismaService.article.findUnique({
+      where: { id: articleId },
+    });
+
+    if (!article) {
+      throw new NotFoundError('Article not found');
+    }
+
+    const cacheKey = `analyze:${articleId}:${dto.task ?? 'review'}:${article.updatedAt.getTime()}`;
+    const cached = this.cacheService.get(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    this.usageService.track('analyze');
+
+    const analyzeJSON = await this.callGemini(
+      buildAnalyzePrompt(article.content, dto.task ?? 'review'),
+    );
+
+    const { analysis, suggestions, severity } = JSON.parse(analyzeJSON);
+
+    console.log(analyzeJSON);
+
+    const response: AnalyzeArticleResponseDto = {
+      articleId,
+      analysis,
+      suggestions,
+      severity,
     };
 
     this.cacheService.set(cacheKey, response);

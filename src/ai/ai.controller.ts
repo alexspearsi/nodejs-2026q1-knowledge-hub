@@ -9,17 +9,18 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { AiService } from './gemini.service';
+import { AIService } from './gemini.service';
 import { SummarizeArticleDto } from './dto/summarize-article.dto';
 import { TranslateArticleDto } from './dto/translate-article.dto';
+import { AnalyzeArticleDto } from './dto/analyze-article.dto';
 
 @Controller('ai')
 export class AiController {
-  constructor(private readonly aiService: AiService) {}
+  constructor(private readonly AIService: AIService) {}
 
   @Get('test')
   async test() {
-    const result = await this.aiService.generateContent(
+    const result = await this.AIService.generateContent(
       'who am I? in 2 sentences',
     );
     return { result };
@@ -31,7 +32,7 @@ export class AiController {
     @Param('articleId', new ParseUUIDPipe({ version: '4' })) articleId: string,
     @Body() body: SummarizeArticleDto,
   ) {
-    return this.aiService.summarize(articleId, body);
+    return this.AIService.summarize(articleId, body);
   }
 
   @Post('articles/:articleId/translate')
@@ -40,6 +41,15 @@ export class AiController {
     @Param('articleId', new ParseUUIDPipe({ version: '4' })) articleId: string,
     @Body() body: TranslateArticleDto,
   ) {
-    return this.aiService.translate(articleId, body);
+    return this.AIService.translate(articleId, body);
+  }
+
+  @Post('articles/:articleId/analyze')
+  @HttpCode(HttpStatus.OK)
+  async analyze(
+    @Param('articleId', new ParseUUIDPipe({ version: '4' })) articleId: string,
+    @Body() body: AnalyzeArticleDto,
+  ) {
+    return this.AIService.analyze(articleId, body);
   }
 }

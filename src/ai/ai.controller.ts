@@ -7,23 +7,41 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 
 import { AIService } from './gemini.service';
 import { SummarizeArticleDto } from './dto/summarize-article.dto';
 import { TranslateArticleDto } from './dto/translate-article.dto';
 import { AnalyzeArticleDto } from './dto/analyze-article.dto';
+import { GenerateDto } from './dto/generate.dto';
+import { AIRateLimitGuard } from './guards/ai-rate-limit.guard';
+import { AIUsageService } from './ai-usage.service';
 
 @Controller('ai')
+@UseGuards(AIRateLimitGuard)
 export class AiController {
-  constructor(private readonly AIService: AIService) {}
+  constructor(
+    private readonly AIService: AIService,
+    private readonly usageService: AIUsageService,
+  ) {}
 
   @Get('test')
   async test() {
-    const result = await this.AIService.generateContent(
-      'who am I? in 2 sentences',
-    );
-    return { result };
+    return await this.AIService.generateContent({
+      prompt: 'who am I? in 2 sentences',
+    });
+  }
+
+  @Get('usage')
+  getUsage() {
+    return this.usageService.getStats();
+  }
+
+  @Post('generate')
+  @HttpCode(HttpStatus.OK)
+  async generate(@Body() body: GenerateDto) {
+    return this.AIService.generateContent(body);
   }
 
   @Post('articles/:articleId/summarize')

@@ -16,9 +16,10 @@ import { AIUsageService } from './ai-usage.service';
 import { TranslateArticleDto } from './dto/translate-article.dto';
 import { buildTranslatePrompt } from './prompts/translate.prompt';
 import { TranslateArticleResponse } from './dto/translate-article-response.dto';
-import { AnalyzeArticleDto } from './dto/analyze-article.dto';
+import { AnalyzeArticleDto, AnalyzeTask } from './dto/analyze-article.dto';
 import { buildAnalyzePrompt } from './prompts/analyze.prompt';
 import { AnalyzeArticleResponseDto } from './dto/analyze-article-response.dto';
+import { GenerateDto } from './dto/generate.dto';
 
 @Injectable()
 export class AIService {
@@ -42,13 +43,13 @@ export class AIService {
     return `${this.baseUrl}/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
   }
 
-  async generateContent(prompt: string): Promise<string> {
+  async generateContent(body: GenerateDto): Promise<string> {
     const url = this.getUrl();
 
     try {
       const response = await firstValueFrom(
         this.httpService.post(url, {
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [{ parts: [{ text: body.prompt }] }],
         }),
       );
 
@@ -144,7 +145,7 @@ export class AIService {
       throw new NotFoundError('Article not found');
     }
 
-    const cacheKey = `analyze:${articleId}:${dto.task ?? 'review'}:${article.updatedAt.getTime()}`;
+    const cacheKey = `analyze:${articleId}:${dto.task ?? AnalyzeTask.Review}:${article.updatedAt.getTime()}`;
     const cached = this.cacheService.get(cacheKey);
 
     if (cached) {
@@ -154,12 +155,10 @@ export class AIService {
     this.usageService.track('analyze');
 
     const analyzeJSON = await this.callGemini(
-      buildAnalyzePrompt(article.content, dto.task ?? 'review'),
+      buildAnalyzePrompt(article.content, dto.task ?? AnalyzeTask.Review),
     );
 
     const { analysis, suggestions, severity } = JSON.parse(analyzeJSON);
-
-    console.log(analyzeJSON);
 
     const response: AnalyzeArticleResponseDto = {
       articleId,
@@ -173,7 +172,7 @@ export class AIService {
     return response;
   }
 
-  async callGemini(prompt: string) {
+  async callGemini(prompt: string, attempt = 0) {
     const url = `${this.baseUrl}/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
     const body = { contents: [{ parts: [{ text: prompt }] }] };
 
@@ -193,6 +192,11 @@ export class AIService {
       }
 
       if (status === 429) {
+        if (attempt < 3) {
+          const delay = Math.pow(2, attempt) * 1000;
+          await new Promise((res) => setTimeout(res, delay));
+          return this.callGemini(prompt, attempt + 1);
+        }
         throw new ServiceUnavailableException('AI service rate limit exceeded');
       }
 
@@ -201,6 +205,10 @@ export class AIService {
           'AI service is temporarily unavailable',
         );
       }
+
+      throw new ServiceUnavailableException(
+        'AI service is temporarily unavailable',
+      );
     }
   }
 

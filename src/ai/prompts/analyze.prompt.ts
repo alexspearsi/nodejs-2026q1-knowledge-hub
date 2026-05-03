@@ -1,6 +1,8 @@
+import { AnalyzeTask } from '../dto/analyze-article.dto';
+
 export const buildAnalyzePrompt = (
   content: string,
-  task: 'review' | 'bugs' | 'optimize' | 'explain',
+  task: AnalyzeTask,
 ): string => {
   const instructions = {
     review: 'Review the following article for quality, clarity, and accuracy.',

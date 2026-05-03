@@ -1,7 +1,14 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
+
+export enum AnalyzeTask {
+  Review = 'review',
+  Bugs = 'bugs',
+  Optimize = 'optimize',
+  Explain = 'explain',
+}
 
 export class AnalyzeArticleDto {
-  @IsString()
+  @IsEnum(AnalyzeTask)
   @IsOptional()
-  task?: 'review' | 'bugs' | 'optimize' | 'explain';
+  task?: AnalyzeTask;
 }

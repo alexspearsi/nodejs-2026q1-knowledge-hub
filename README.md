@@ -155,6 +155,28 @@ docker-compose down -v
 docker-compose up --build
 ```
 
+## Gemini AI Integration
+
+### Model
+
+`gemini-2.5-flash` (configurable via `GEMINI_MODEL` in `.env`).
+
+### Getting an API key
+
+1. Go to [https://aistudio.google.com](https://aistudio.google.com) and sign in with your Google account
+2. Click **"Get API key"** and **"Create API key"**
+3. Copy the generated key and paste it into `GEMINI_API_KEY=` in your `.env`
+
+### AI-specific environment variables
+
+```env
+GEMINI_API_KEY=your-api-key-here
+GEMINI_API_BASE_URL=https://generativelanguage.googleapis.com
+GEMINI_MODEL=gemini-2.5-flash
+AI_RATE_LIMIT_RPM=20
+AI_CACHE_TTL_SEC=300
+```
+
 ## Security Scan
 
 Tool: Docker Scout

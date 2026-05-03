@@ -53,14 +53,14 @@ export class AIService {
       throw new NotFoundError('Article not found');
     }
 
+    this.usageService.track('summarize');
+
     const cacheKey = `summarize:${articleId}:${dto.maxLength ?? 'medium'}:${article.updatedAt.getTime()}`;
     const cached = this.cacheService.get(cacheKey);
 
     if (cached) {
       return cached;
     }
-
-    this.usageService.track('summarize');
 
     const summary = await this.callGemini(
       buildSummarizePrompt(article.content, dto.maxLength ?? 'medium'),
@@ -87,14 +87,14 @@ export class AIService {
       throw new NotFoundError('Article not found');
     }
 
+    this.usageService.track('translate');
+
     const cacheKey = `translate:${articleId}:${dto.targetLanguage}:${dto.sourceLanguage ?? 'auto'}:${article.updatedAt.getTime()}`;
     const cached = this.cacheService.get(cacheKey);
 
     if (cached) {
       return cached;
     }
-
-    this.usageService.track('translate');
 
     const [translatedText, detectedLanguage] = await Promise.all([
       this.callGemini(
@@ -129,14 +129,14 @@ export class AIService {
       throw new NotFoundError('Article not found');
     }
 
+    this.usageService.track('analyze');
+
     const cacheKey = `analyze:${articleId}:${dto.task ?? AnalyzeTask.Review}:${article.updatedAt.getTime()}`;
     const cached = this.cacheService.get(cacheKey);
 
     if (cached) {
       return cached;
     }
-
-    this.usageService.track('analyze');
 
     const analyzeJSON = await this.callGemini(
       buildAnalyzePrompt(article.content, dto.task ?? AnalyzeTask.Review),

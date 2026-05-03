@@ -39,25 +39,9 @@ export class AIService {
     this.model = this.configService.get<string>('GEMINI_MODEL');
   }
 
-  private getUrl(): string {
-    return `${this.baseUrl}/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
-  }
-
   async generateContent(body: GenerateDto): Promise<string> {
-    const url = this.getUrl();
-
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(url, {
-          contents: [{ parts: [{ text: body.prompt }] }],
-        }),
-      );
-
-      return response.data.candidates[0].content.parts[0].text;
-    } catch (error: any) {
-      this.handleError(error, url);
-      throw error;
-    }
+    this.usageService.track('generate');
+    return this.callGemini(body.prompt);
   }
 
   async summarize(articleId: string, dto: SummarizeArticleDto) {
@@ -194,9 +178,12 @@ export class AIService {
       if (status === 429) {
         if (attempt < 3) {
           const delay = Math.pow(2, attempt) * 1000;
+
           await new Promise((res) => setTimeout(res, delay));
+
           return this.callGemini(prompt, attempt + 1);
         }
+
         throw new ServiceUnavailableException('AI service rate limit exceeded');
       }
 
@@ -210,12 +197,5 @@ export class AIService {
         'AI service is temporarily unavailable',
       );
     }
-  }
-
-  private handleError(error: any, url: string) {
-    console.error('Gemini error status:', error?.response?.status);
-    console.error('Gemini error data:', JSON.stringify(error?.response?.data));
-
-    console.error('URL used:', url);
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class AiUsageService {
+export class AIUsageService {
   private total = 0;
   private readonly endpoints = new Map<string, number>();
 

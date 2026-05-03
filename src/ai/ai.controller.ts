@@ -11,6 +11,7 @@ import {
 
 import { AiService } from './gemini.service';
 import { SummarizeArticleDto } from './dto/summarize-article.dto';
+import { TranslateArticleDto } from './dto/translate-article.dto';
 
 @Controller('ai')
 export class AiController {
@@ -31,5 +32,14 @@ export class AiController {
     @Body() body: SummarizeArticleDto,
   ) {
     return this.aiService.summarize(articleId, body);
+  }
+
+  @Post('articles/:articleId/translate')
+  @HttpCode(HttpStatus.OK)
+  async translate(
+    @Param('articleId', new ParseUUIDPipe({ version: '4' })) articleId: string,
+    @Body() body: TranslateArticleDto,
+  ) {
+    return this.aiService.translate(articleId, body);
   }
 }

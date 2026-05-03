@@ -5,12 +5,12 @@ import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AICacheService } from './ai-cache.service';
-import { AiUsageService } from './ai-usage.service';
+import { AIUsageService } from './ai-usage.service';
 import { AIRateLimitGuard } from './guards/ai-rate-limit.guard';
 
 @Module({
   imports: [HttpModule, ConfigModule, PrismaModule],
   controllers: [AiController],
-  providers: [AiService, AICacheService, AiUsageService, AIRateLimitGuard],
+  providers: [AiService, AICacheService, AIUsageService, AIRateLimitGuard],
 })
 export class AiModule {}

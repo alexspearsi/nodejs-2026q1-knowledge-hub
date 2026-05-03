@@ -12,7 +12,10 @@ import { SummarizeArticleDto } from './dto/summarize-article.dto';
 import { SummarizeArticleResponseDto } from './dto/summarize-article-response.dto';
 import { buildSummarizePrompt } from './prompts/summarize.prompt';
 import { AICacheService } from './ai-cache.service';
-import { AiUsageService } from './ai-usage.service';
+import { AIUsageService } from './ai-usage.service';
+import { TranslateArticleDto } from './dto/translate-article.dto';
+import { buildTranslatePrompt } from './prompts/translate.prompt';
+import { TranslateArticleResponse } from './dto/translate-article-response.dto';
 
 @Injectable()
 export class AiService {
@@ -25,7 +28,7 @@ export class AiService {
     private readonly configService: ConfigService,
     private readonly prismaService: PrismaService,
     private readonly cacheService: AICacheService,
-    private readonly usageService: AiUsageService,
+    private readonly usageService: AIUsageService,
   ) {
     this.apiKey = this.configService.get<string>('GEMINI_API_KEY');
     this.baseUrl = this.configService.get<string>('GEMINI_API_BASE_URL');
@@ -80,6 +83,48 @@ export class AiService {
       summary,
       originalLength: article.content.length,
       summaryLength: summary.length,
+    };
+
+    this.cacheService.set(cacheKey, response);
+
+    return response;
+  }
+
+  async translate(articleId: string, dto: TranslateArticleDto) {
+    const article = await this.prismaService.article.findUnique({
+      where: { id: articleId },
+    });
+
+    if (!article) {
+      throw new NotFoundError('Article not found');
+    }
+
+    const cacheKey = `translate:${articleId}:${dto.targetLanguage}:${dto.sourceLanguage ?? 'auto'}:${article.updatedAt.getTime()}`;
+    const cached = this.cacheService.get(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    this.usageService.track('translate');
+
+    const [translatedText, detectedLanguage] = await Promise.all([
+      this.callGemini(
+        buildTranslatePrompt(
+          article.content,
+          dto.targetLanguage,
+          dto.sourceLanguage,
+        ),
+      ),
+      this.callGemini(
+        `Detect the language of this text. Respond with only the language name, nothing else: ${article.content.slice(0, 500)}`,
+      ),
+    ]);
+
+    const response: TranslateArticleResponse = {
+      articleId,
+      translatedText,
+      detectedLanguage,
     };
 
     this.cacheService.set(cacheKey, response);

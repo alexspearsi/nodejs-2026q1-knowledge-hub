@@ -10,6 +10,7 @@ import { ArticleModule } from './article/article.module';
 import { CustomLogger } from './common/logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { AiModule } from './ai/ai.module';
 import { AllExceptionsFilter } from './common/filters/all-exception.filter';
 
 async function bootstrap() {
@@ -73,6 +74,7 @@ function setupSwagger(app: INestApplication) {
       'https://github.com/alexspearsi',
       'strelchanka06@gmail.com',
     )
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config, {
@@ -82,6 +84,7 @@ function setupSwagger(app: INestApplication) {
       CommentModule,
       UserModule,
       AuthModule,
+      AiModule,
     ],
   });
 

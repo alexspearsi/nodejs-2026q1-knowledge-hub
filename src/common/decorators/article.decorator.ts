@@ -1,19 +1,11 @@
 import { applyDecorators, HttpStatus } from '@nestjs/common';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { CreateArticleDto } from '../../article/dto/create-article.dto';
 import { UpdateArticleDto } from '../../article/dto/update-article.dto';
 
 export function ApiGetArticles() {
   return applyDecorators(
     ApiOperation({ summary: 'Get list of articles' }),
-    ApiQuery({ name: 'page', required: false, example: 1 }),
-    ApiQuery({ name: 'limit', required: false, example: 10 }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'List of articles returned successfully',
@@ -30,6 +22,10 @@ export function ApiGetArticles() {
           ],
         },
       },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Missing or invalid Bearer token',
     }),
   );
 }
@@ -127,5 +123,21 @@ export function ApiDeleteArticle() {
   return applyDecorators(
     ApiOperation({ summary: 'Delete article by id' }),
     ApiParam({ name: 'id', description: 'Article UUID v4' }),
+    ApiResponse({
+      status: HttpStatus.NO_CONTENT,
+      description: 'Article deleted successfully',
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Invalid UUID',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'Article not found',
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Missing or invalid Bearer token',
+    }),
   );
 }

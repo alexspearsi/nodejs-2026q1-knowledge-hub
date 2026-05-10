@@ -177,6 +177,51 @@ AI_RATE_LIMIT_RPM=20
 AI_CACHE_TTL_SEC=300
 ```
 
+## RAG (Retrieval-Augmented Generation)
+
+### Models
+
+Generation `gemini-2.5-flash` (env: `GEMINI_MODEL`) |
+Embeddings `gemini-embedding-2` (env: `GEMINI_EMBEDDING_MODEL`) |
+
+### Vector DB
+
+[Qdrant](https://qdrant.tech/) runs as a Docker container on port **6333**, data persisted to `qdrant-data` volume. The app connects via internal hostname `vectordb` (`RAG_VECTOR_DB_URL=http://vectordb:6333`).
+
+### Startup flow
+
+```bash
+# 1. Clone and configure
+cp .env.example .env
+# set GEMINI_API_KEY and GEMINI_EMBEDDING_MODEL=gemini-embedding-2 in .env
+
+# 2. Start all services (app + PostgreSQL + Qdrant)
+docker-compose up --build
+
+# 3. Build the vector index
+curl -X POST http://localhost:4000/ai/rag/index \
+  -H "Content-Type: application/json" \
+  -d '{"onlyPublished": true}'
+
+# 4. Semantic search
+curl -X POST http://localhost:4000/ai/rag/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "how to authenticate users", "limit": 3}'
+
+# 5. Chat
+curl -X POST http://localhost:4000/ai/rag/chat \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What articles do you have about authentication?"}'
+```
+
+### Known limitations
+
+- **Rate limits**: Gemini free tier ~15 req/min for generation, ~1500 req/day for embeddings. Large reindex operations may hit the quota.
+- **Indexing latency**: Each chunk = one Gemini API call. 50 articles can take 30–60 seconds to index.
+- **Regional availability**: Gemini API may not be available in all regions — check your Google Cloud project settings if you get 403.
+- **Conversation history**: Stored in application memory, cleared on container restart.
+- **Vector dimension lock**: Collection is created once with fixed size (3072 for `gemini-embedding-2`). Switching models requires dropping and recreating the collection.
+
 ## Security Scan
 
 Tool: Docker Scout

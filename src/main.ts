@@ -11,6 +11,7 @@ import { CustomLogger } from './common/logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from './ai/ai.module';
+import { RagModule } from './rag/rag.module';
 import { AllExceptionsFilter } from './common/filters/all-exception.filter';
 
 async function bootstrap() {
@@ -85,6 +86,7 @@ function setupSwagger(app: INestApplication) {
       UserModule,
       AuthModule,
       AiModule,
+      RagModule,
     ],
   });
 

@@ -97,7 +97,7 @@ export class RagService {
         articleId: result.payload.articleId,
         articleTitle: result.payload.articleTitle,
         chunk: result.payload.chunk,
-        similiarity: result.score,
+        similarity: result.score,
       })),
     };
   }
@@ -110,6 +110,10 @@ export class RagService {
     }
 
     if (dto.categoryId) {
+      must.push({ key: 'categoryId', match: { value: dto.categoryId } });
+    }
+
+    if (dto.tags?.length) {
       must.push({ key: 'tags', match: { any: dto.tags } });
     }
 
@@ -124,7 +128,7 @@ export class RagService {
 
     const sources = results.map((result) => ({
       articleId: result.payload.articleId,
-      articleTitle: result.payload.articletitle,
+      articleTitle: result.payload.articleTitle,
       relevantChunk: result.payload.chunk,
     }));
 

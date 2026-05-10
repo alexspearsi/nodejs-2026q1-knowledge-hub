@@ -7,17 +7,26 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthRequestDto } from './dto/signup.dto';
 import { Response } from 'express';
 import { JwtGuard } from './guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import {
+  ApiLogin,
+  ApiLogout,
+  ApiRefresh,
+  ApiSignup,
+} from '../common/decorators/auth.decorator';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @ApiSignup()
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(ThrottlerGuard)
@@ -28,6 +37,7 @@ export class AuthController {
     return await this.authService.signup(res, dto);
   }
 
+  @ApiLogin()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(ThrottlerGuard)
@@ -38,6 +48,7 @@ export class AuthController {
     return await this.authService.login(res, dto);
   }
 
+  @ApiLogout()
   @Post('logout')
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.OK)
@@ -45,6 +56,7 @@ export class AuthController {
     return await this.authService.logout(user.id);
   }
 
+  @ApiRefresh()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() body: { refreshToken: string }) {

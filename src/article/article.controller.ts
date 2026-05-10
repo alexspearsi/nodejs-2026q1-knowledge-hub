@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { GetArticlesQueryDto } from './dto/get-articles-query.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ApiCreateArticle,
   ApiDeleteArticle,
@@ -32,6 +32,7 @@ import { UserRole } from '../generated/prisma/enums';
 import { User } from '../user/user.interface';
 
 @ApiTags('Articles')
+@ApiBearerAuth()
 @Controller('article')
 @UseGuards(JwtGuard, RolesGuard)
 export class ArticleController {

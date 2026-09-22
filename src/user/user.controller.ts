@@ -12,7 +12,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ApiCreateUser,
   ApiDeleteUser,
@@ -24,10 +24,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { UserService } from './user.service';
-import {
-  ForbiddenError,
-  ValidationError,
-} from '../common/errors/app.error';
+import { ForbiddenError, ValidationError } from '../common/errors/app.error';
 import { JwtGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -36,6 +33,7 @@ import { UserRole } from '../generated/prisma/enums';
 import { User } from './user.interface';
 
 @ApiTags('User')
+@ApiBearerAuth()
 @Controller('user')
 @UseGuards(JwtGuard, RolesGuard)
 export class UserController {

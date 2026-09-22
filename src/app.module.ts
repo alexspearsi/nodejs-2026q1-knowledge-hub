@@ -13,6 +13,7 @@ import { LoggerModule } from './common/logger/logger.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AiModule } from './ai/ai.module';
+import { RagModule } from './rag/rag.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { AiModule } from './ai/ai.module';
     AuthModule,
     LoggerModule,
     AiModule,
+    RagModule,
   ],
   controllers: [AppController],
   providers: [

@@ -14,7 +14,7 @@ import {
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { GetCommentsQueryDto } from './dto/get-comments-query';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ApiCreateComment,
   ApiDeleteComment,
@@ -29,6 +29,7 @@ import { UserRole } from '../generated/prisma/enums';
 import { User } from '../user/user.interface';
 
 @ApiTags('Comment')
+@ApiBearerAuth()
 @Controller('comment')
 @UseGuards(JwtGuard, RolesGuard)
 export class CommentController {

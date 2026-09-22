@@ -15,7 +15,7 @@ import {
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ApiCreateCategory,
   ApiDeleteCategory,
@@ -30,6 +30,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../generated/prisma/enums';
 
 @ApiTags('Category')
+@ApiBearerAuth()
 @Controller('category')
 @UseGuards(JwtGuard, RolesGuard)
 export class CategoryController {
